@@ -106,9 +106,6 @@ def registry_trans():
 		print(f"Updating guilds {i+1} out of {len(guilds)}")
 		guilds[i]["prefix"] = "=prime "
 		stats = load_stats(guilds[i]["id"])[0]
-		for j in range(len(stats)):
-			stats[j]["admin"] = False
-			save_stats(stats, guilds[i]["id"])
 	save_guilds(guilds)
 	print("Complete.")
 	
@@ -736,7 +733,7 @@ def do_userlogs(stats, pilot, type):
 		return None, 16
 	return logs, None
 
-def do_prefix(stats, token, user):
+def do_prefix(stats, token, user, id):
 	admin_check = False
 	guild_check = False
 	
@@ -745,8 +742,9 @@ def do_prefix(stats, token, user):
 		if item["user"] == user and item["admin"]:
 			admin_check = True
 	for guild in guilds:
-		guild_check = True
-		guilds[guilds.index(guild)]["prefix"] = token
+		if guild["id"] == id:
+			guild_check = True
+			guilds[guilds.index(guild)]["prefix"] = token
 	if not admin_check:
 		return 17
 	if not guild_check:
@@ -1183,7 +1181,7 @@ async def prefix(ctx, token):
 	if error:
 		await ctx.send(get_error(error))
 		return
-	error = do_prefix(stats, token, ctx.message.author.id)
+	error = do_prefix(stats, token, ctx.message.author.id, ctx.message.guild.id)
 	if error:
 		await ctx.send(get_error(error))
 		return
