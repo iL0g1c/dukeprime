@@ -10,7 +10,6 @@ import flask_script
 from operator import itemgetter
 import random
 import csv
-#from channels import *
 
 def load_stats(id):
 	#Loads the data from each user from a jsonlines file.
@@ -1246,5 +1245,13 @@ async def prefix(ctx, token):
 #This allows the bot to be hosted on replit through
 #uptime robot.
 flask_script.begin()
-#runs the bot
-bot.run(bot_token)
+
+try:
+	#runs the bot
+    bot.run(bot_token)
+except discord.errors.HTTPException:
+	#for replit only. Detects if it has exceeded
+	#the rate limit
+	print("\n\n\nBLOCKED BY RATE LIMITS\nRESTARTING NOW\n\n\n")
+	os.system('kill 1')#changes ip address
+	os.system("python restart.py")#reboots bot.
