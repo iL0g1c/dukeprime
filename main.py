@@ -9,6 +9,7 @@ import flask
 import flask_script
 from operator import itemgetter
 import random
+import csv
 #from channels import *
 
 def load_stats(id):
@@ -282,6 +283,13 @@ def round_seconds(obj):
 def round_delta(obj):
 	secs = round(obj.total_seconds())
 	return timedelta(seconds=secs)
+
+def write_log(event_id, time_stamp, guild_id, user_id, action):
+	with open("log.csv", "a") as f:
+		writer = csv.writer(f)
+		print(event_id)
+		writer.writerow((event_id, time_stamp, guild_id, user_id, action))
+	f.close()
 
 def log_on(user, date_amount, time_amount, status, stats):
 	start_check = False
@@ -814,6 +822,10 @@ async def on(ctx):
 	embed.add_field(name="Time: ", value=str(f"{time_zone}: {time_amount.strftime('%H:%M:%S')}"))
 	embed.add_field(name="Action: ", value="Online")
 	stats, event_id, error = log_on(user, date_amount, time_amount, status, stats)
+	
+	time_stamp = datetime.combine(date_amount, time_amount)
+	write_log(event_id, time_stamp, str(ctx.message.guild.id), str(user), "Patrol Start")
+	
 	if error:
 		await ctx.send(get_error(error))
 	else:
@@ -840,6 +852,10 @@ async def radon(ctx):
 	embed.add_field(name="Time: ", value=str(f"{time_zone}: {time_amount.strftime('%H:%M:%S')}"))
 	embed.add_field(name="Action: ", value="Online")
 	stats, event_id, error = radar_on(user, date_amount, time_amount, status, stats)
+	
+	time_stamp = datetime.combine(date_amount, time_amount)
+	write_log(event_id, time_stamp, str(ctx.message.guild.id), str(user), "Radar Patrol Start")
+	
 	if error:
 		await ctx.send(get_error(error))
 	else:
@@ -866,6 +882,10 @@ async def off(ctx):
 	embed.add_field(name="Time: ", value=str(f"{time_zone}: {time_amount.strftime('%H:%M:%S')}"))
 	embed.add_field(name="Action: ", value="Offline")
 	stats, duration, patrols, total, event_id, error = log_off(user, date_amount, time_amount, status, stats)
+	
+	time_stamp = datetime.combine(date_amount, time_amount)
+	write_log(event_id, time_stamp, str(ctx.message.guild.id), str(user), "Patrol End")
+	
 	if error:
 		await ctx.send(get_error(error))
 	else:
@@ -895,6 +915,10 @@ async def radoff(ctx):
 	embed.add_field(name="Time: ", value=str(f"{time_zone}: {time_amount.strftime('%H:%M:%S')}"))
 	embed.add_field(name="Action: ", value="Offline")
 	stats, duration, patrols, total, event_id, error = radar_off(user, date_amount, time_amount, status, stats)
+	
+	time_stamp = datetime.combine(date_amount, time_amount)
+	write_log(event_id, time_stamp, str(ctx.message.guild.id), str(user), "Radar Patrol End")
+	
 	if error:
 		await ctx.send(get_error(error))
 	else:
@@ -923,6 +947,10 @@ async def kill(ctx):
 	embed.add_field(name="Time: ", value=str(f"{time_zone}: {time_amount.strftime('%H:%M:%S')}"))
 	embed.add_field(name="Action: ", value="Kill")
 	stats, kills, disables, event_id, error = do_kill(user, date_amount, time_amount, stats)
+
+	time_stamp = datetime.combine(date_amount, time_amount)
+	write_log(event_id, time_stamp, str(ctx.message.guild.id), str(user), "Kill")
+	
 	if error:
 		await ctx.send(get_error(error))
 	else:
@@ -949,6 +977,10 @@ async def disable(ctx):
 	embed.add_field(name="Time: ", value=str(f"{time_zone}: {time_amount.strftime('%H:%M:%S')}"))
 	embed.add_field(name="Action: ", value="Disable")
 	stats, kills, disables, event_id, error = do_disable(user, date_amount, time_amount, stats)
+	
+	time_stamp = datetime.combine(date_amount, time_amount)
+	write_log(event_id, time_stamp, str(ctx.message.guild.id), str(user), "Disable")
+	
 	if error:
 		await ctx.send(get_error(error))
 	else:
@@ -987,12 +1019,18 @@ async def sar(ctx, action, pilot: discord.User = None):
 	embed.add_field(name="Date: ", value=str(date_amount))
 	embed.add_field(name="Time: ", value=str(f"{time_zone}: {time_amount.strftime('%H:%M:%S')}"))
 	if action == "req":
+		log_action = "SAR Request"
 		embed.add_field(name="Action: ", value="SAR Request")
 	elif action == "give":
+		log_action = "SAR Given"
 		embed.add_field(name="Action: ", value="SAR Given")
 	if pilot != None:
 		pilot = pilot.id
 	stats, count, event_id, error = record_sar(user, date_amount, time_amount, action, pilot, stats)
+
+	time_stamp = datetime.combine(date_amount, time_amount)
+	write_log(event_id, time_stamp, str(ctx.message.guild.id), str(user), log_action)
+	
 	if error:
 		await ctx.send(get_error(error))
 	else:
@@ -1011,6 +1049,8 @@ async def register(ctx):
 	guilds = load_guilds()
 	id = ctx.message.guild.id
 	guilds, error = do_register(id, guilds)
+	time_stamp = datetime.now()
+	write_log(None, time_stamp, str(ctx.message.guild.id), str(ctx.message.author.id), "Guild Registered")
 	if error:
 		await ctx.send(get_error(error))
 	else:
@@ -1039,6 +1079,8 @@ async def top(ctx, type, span="month"):
 			leaderboard += f"{i+1}. {member.display_name} | {type}: {ranks[i][1]}\n"
 		embed = discord.Embed(title=f"{type} top", description=leaderboard, color=0xFF5733)
 		await ctx.send(embed=embed)
+		time_stamp = datetime.now()
+		write_log(None, time_stamp, str(ctx.message.guild.id), str(ctx.message.author.id), "displayed top")
 
 #used to create admins which can use admin commands
 @bot.command(brief="Allows targeted user to use admmin commmands.", description="Allows targeted user to use admmin commmands. You must have the Manage Roles permission to use this command.")
@@ -1055,6 +1097,8 @@ async def cradmin(ctx, user: discord.User):
 	else:
 		await ctx.send(f"Made {user.mention} a DukePrime admin.")
 		save_stats(stats, ctx.message.guild.id)
+		time_stamp = datetime.now()
+		write_log(None, time_stamp, str(ctx.message.guild.id), str(ctx.message.author.id), "Created an admin.")
 	
 #error detection for an invalid user entry.
 @cradmin.error
@@ -1076,6 +1120,8 @@ async def remev(ctx, event_id):
 	else:
 		await ctx.send(f"Removed event '{event_id}' from your servers registry.")
 		save_stats(stats, ctx.message.guild.id)
+		time_stamp = datetime.now()
+		write_log(None, time_stamp, str(ctx.message.guild.id), str(ctx.message.author.id), "Removed an event.")
 
 @bot.command(brief="Sets a channel where you will here updates for DukePrime.", description="Sets a channel where you will here updates for DukePrime.")
 async def setannounce(ctx):
@@ -1088,6 +1134,8 @@ async def setannounce(ctx):
 	else:
 		await ctx.send("DukePrime announcements will be sent in this channel.")
 		save_guilds(guilds)
+		time_stamp = datetime.now()
+		write_log(None, time_stamp, str(ctx.message.guild.id), str(ctx.message.author.id), "Set an announcement channel.")
 
 @bot.command(brief="Developer Command.", description="Developer Command.")
 async def announcement(ctx):
@@ -1101,6 +1149,8 @@ async def announcement(ctx):
 			if "announce" in guild:
 				channel = bot.get_channel(guild["announce"])
 				await channel.send(result[1])
+		time_stamp = datetime.now()
+		write_log(None, time_stamp, str(ctx.message.guild.id), str(ctx.message.author.id), "Broadcasted an announcement.")
 	else:
 		await ctx.send("You are not a developer.")
 
@@ -1187,8 +1237,10 @@ async def prefix(ctx, token):
 	if error:
 		await ctx.send(get_error(error))
 		return
-	await ctx.message.guild.me.edit(nick=f"[{token}] DukePrime")
+	await ctx.message.guild.me.edit(nick=f"[{token}] DukePrime|Beta")
 	await ctx.send("Changed my prefix to: " + token)
+	time_stamp = datetime.now()
+	write_log(None, time_stamp, str(ctx.message.guild.id), str(ctx.message.author.id), "Changed prefix.")
 	
 #starts the flask.
 #This allows the bot to be hosted on replit through
