@@ -913,6 +913,11 @@ async def off(ctx):
 	logged = confirm_patrol(stats, ctx.message.author.id)
 	if not logged:
 		await ctx.send("An error has occured and your patrol has not been logged. Try closing your patrol again.")
+		me = bot.get_user(786382147531440140)
+		await me.send("Ghostbug detected.")
+		await me.send("Isolating patrol data...")
+		message = f"Name: {ctx.message.author.name} \nDate: {date_amount} \nTime: {time_amount}\nTotal Patrols: {patrols}\nTotal Time: {total}\nEvent ID: {event_id}\nDuration: {str(duration)}"
+		await me.send(message)
 
 @bot.command(brief="Log when you get offline.", description="Log when you get offline.")
 async def radoff(ctx):
@@ -951,6 +956,11 @@ async def radoff(ctx):
 	logged = confirm_radar(stats, ctx.message.author.id)
 	if not logged:
 		await ctx.send("An error has occured and your patrol has not been logged. Try closing your patrol again.")
+		me = bot.get_user(786382147531440140)
+		await me.send("Ghostbug detected.")
+		await me.send("Isolating patrol data...")
+		message = f"Name: {ctx.message.author.name} \nDate: {date_amount} \nTime: {time_amount}\nTotal Patrols: {patrols}\nTotal Time: {total}\nEvent ID: {event_id}\nDuration: {str(duration)}"
+		await me.send(message)
 
 @bot.command(brief="Log when you get a kill.", description="Log when you get a kill.")
 async def kill(ctx):
