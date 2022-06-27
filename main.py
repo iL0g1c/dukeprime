@@ -10,6 +10,7 @@ import flask_script
 from operator import itemgetter
 import random
 import csv
+#from channels import *
 
 def load_stats(id):
 	#Loads the data from each user from a jsonlines file.
@@ -286,7 +287,6 @@ def round_delta(obj):
 def write_log(event_id, time_stamp, guild_id, user_id, action):
 	with open("log.csv", "a") as f:
 		writer = csv.writer(f)
-		print(event_id)
 		writer.writerow((event_id, time_stamp, guild_id, user_id, action))
 	f.close()
 
@@ -402,6 +402,13 @@ def log_off(user, date_amount, time_amount, status, stats):
 	elif not start_check:
 		return stats, None, None, None, None, 2
 
+def confirm_patrol(stats, user_id):
+	for user in stats:
+		if user_id == user["user"]:
+			if user["cur_patrol"]:
+				return False
+			return True
+
 def radar_off(user, date_amount, time_amount, status, stats):
 	start_check = False
 	user_check = False
@@ -437,6 +444,13 @@ def radar_off(user, date_amount, time_amount, status, stats):
 		return stats, None, None, None, None, 3
 	elif not start_check:
 		return stats, None, None, None, None, 2
+
+def confirm_radar(stats, user_id):
+	for user in stats:
+		if user_id == user["user"]:
+			if user["cur_radar"]:
+				return False
+			return True
 
 def do_kill(user, date_amount, time_amount, stats):
 	user_check = False
@@ -895,6 +909,11 @@ async def off(ctx):
 		await ctx.send(embed=embed)
 		save_stats(stats, ctx.message.guild.id)
 
+	stats, error = load_stats(ctx.message.guild.id)
+	logged = confirm_patrol(stats, ctx.message.author.id)
+	if not logged:
+		await ctx.send("An error has occured and your patrol has not been logged. Try closing your patrol again.")
+
 @bot.command(brief="Log when you get offline.", description="Log when you get offline.")
 async def radoff(ctx):
 	stats, error=load_stats(ctx.message.guild.id)
@@ -927,6 +946,11 @@ async def radoff(ctx):
 		embed.set_footer(text=f"This radar patrol lasted {str(duration)}")
 		await ctx.send(embed=embed)
 		save_stats(stats, ctx.message.guild.id)
+
+	stats, error = load_stats(ctx.message.guild.id)
+	logged = confirm_radar(stats, ctx.message.author.id)
+	if not logged:
+		await ctx.send("An error has occured and your patrol has not been logged. Try closing your patrol again.")
 
 @bot.command(brief="Log when you get a kill.", description="Log when you get a kill.")
 async def kill(ctx):
