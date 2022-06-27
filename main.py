@@ -5,12 +5,10 @@ from datetime import datetime, date, timedelta, timezone
 from dateutil.relativedelta import relativedelta
 import jsonlines
 import json
-import flask
-import flask_script
 from operator import itemgetter
 import random
 import csv
-#from channels import *
+from dotenv import load_dotenv
 
 def load_stats(id):
 	#Loads the data from each user from a jsonlines file.
@@ -107,9 +105,6 @@ def registry_trans():
 		print(f"Updating guilds {i+1} out of {len(guilds)}")
 		guilds[i]["prefix"] = "=prime "
 		stats = load_stats(guilds[i]["id"])[0]
-		for j in range(len(stats)):
-			stats[j]["admin"] = False
-			save_stats(stats, guilds[i]["id"])
 	save_guilds(guilds)
 	print("Complete.")
 	
@@ -757,7 +752,7 @@ def do_userlogs(stats, pilot, type):
 		return None, 16
 	return logs, None
 
-def do_prefix(stats, token, user):
+def do_prefix(stats, token, user, id):
 	admin_check = False
 	guild_check = False
 	
@@ -766,8 +761,9 @@ def do_prefix(stats, token, user):
 		if item["user"] == user and item["admin"]:
 			admin_check = True
 	for guild in guilds:
-		guild_check = True
-		guilds[guilds.index(guild)]["prefix"] = token
+		if guild["id"] == id:
+			guild_check = True
+			guilds[guilds.index(guild)]["prefix"] = token
 	if not admin_check:
 		return 17
 	if not guild_check:
@@ -778,7 +774,8 @@ def do_prefix(stats, token, user):
 
 intents = discord.Intents.default()
 intents.members = True
-bot_token = os.environ['bot_token']
+load_dotenv()
+TOKEN = os.getenv('DISCORD_TOKEN')
 #An internal function that will make sure the data structure carries over.
 #registry_trans()
 bot = commands.Bot(intents=intents, command_prefix=load_prefix, help_command=None)
@@ -1266,7 +1263,7 @@ async def prefix(ctx, token):
 	if error:
 		await ctx.send(get_error(error))
 		return
-	error = do_prefix(stats, token, ctx.message.author.id)
+	error = do_prefix(stats, token, ctx.message.author.id, ctx.message.guild.id)
 	if error:
 		await ctx.send(get_error(error))
 		return
@@ -1274,18 +1271,6 @@ async def prefix(ctx, token):
 	await ctx.send("Changed my prefix to: " + token)
 	time_stamp = datetime.now()
 	write_log(None, time_stamp, str(ctx.message.guild.id), str(ctx.message.author.id), "Changed prefix.")
-	
-#starts the flask.
-#This allows the bot to be hosted on replit through
-#uptime robot.
-flask_script.begin()
 
-try:
-	#runs the bot
-    bot.run(bot_token)
-except discord.errors.HTTPException:
-	#for replit only. Detects if it has exceeded
-	#the rate limit
-	print("\n\n\nBLOCKED BY RATE LIMITS\nRESTARTING NOW\n\n\n")
-	os.system('kill 1')#changes ip address
-	os.system("python restart.py")#reboots bot.
+#runs the bot
+bot.run(TOKEN)
