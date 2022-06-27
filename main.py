@@ -5,8 +5,6 @@ from datetime import datetime, date, timedelta, timezone
 from dateutil.relativedelta import relativedelta
 import jsonlines
 import json
-import flask
-import flask_script
 from operator import itemgetter
 import random
 from dotenv import load_dotenv
@@ -1189,9 +1187,5 @@ async def prefix(ctx, token):
 	await ctx.message.guild.me.edit(nick=f"[{token}] DukePrime")
 	await ctx.send("Changed my prefix to: " + token)
 	
-#starts the flask.
-#This allows the bot to be hosted on replit through
-#uptime robot.
-flask_script.begin()
 #runs the bot
-bot.run(bot_token)
+bot.run(TOKEN)
