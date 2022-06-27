@@ -9,7 +9,7 @@ import flask
 import flask_script
 from operator import itemgetter
 import random
-#from channels import *
+from dotenv import load_dotenv
 
 def load_stats(id):
 	#Loads the data from each user from a jsonlines file.
@@ -755,7 +755,8 @@ def do_prefix(stats, token, user, id):
 
 intents = discord.Intents.default()
 intents.members = True
-bot_token = os.environ['bot_token']
+load_dotenv()
+TOKEN = os.getenv('DISCORD_TOKEN')
 #An internal function that will make sure the data structure carries over.
 #registry_trans()
 bot = commands.Bot(intents=intents, command_prefix=load_prefix, help_command=None)
