@@ -17,11 +17,11 @@ def load_stats(id):
 	guild_check = False
 	#locates the location of the guilds json
 	#by scanning for the file id.
-	with jsonlines.open("guilds.jl", "r") as reader:
+	with jsonlines.open("./backend/guilds.jl", "r") as reader:
 		for obj in reader:
 			if obj["id"] == id:
 				guild_check = True
-				file = obj["file"]
+				file = "./backend/" + obj["file"]
 				break
 	reader.close()
 
@@ -39,7 +39,7 @@ def load_stats(id):
 def load_guilds():
 	#Loads all the guild files and returns them.
 	guilds = []
-	with jsonlines.open("guilds.jl") as reader:
+	with jsonlines.open("./backend/guilds.jl") as reader:
 		for obj in reader:
 			guilds.append(obj)
 	reader.close()
@@ -56,7 +56,7 @@ def load_data():
 	#Loads the global data for the bot.
 	#Right now only includes the id counter.
 	data = []
-	with jsonlines.open("data.jl") as reader:
+	with jsonlines.open("./backend/data.jl") as reader:
 		for obj in reader:
 			data.append(obj)
 	reader.close()
@@ -68,10 +68,10 @@ def save_stats(stats, id):
 	#immediate data loss.
 
 	#Locates the guild file to be read.
-	with jsonlines.open("guilds.jl", "r") as reader:
+	with jsonlines.open("./backend/guilds.jl", "r") as reader:
 		for obj in reader:
 			if obj["id"] == id:
-				file = obj["file"]
+				file = "./backend" + obj["file"]
 				break
 		reader.close()
 
@@ -82,13 +82,13 @@ def save_stats(stats, id):
 
 def save_guilds(guilds):
 	#Saves the updated guild registry.
-	with jsonlines.open("guilds.jl", "w") as writer:
+	with jsonlines.open("./backend/guilds.jl", "w") as writer:
 		writer.write_all(guilds)
 	writer.close()
 
 def save_data(data):
 	#Saves the data in the global data file.
-	with jsonlines.open("data.jl", "w") as writer:
+	with jsonlines.open("./backend/data.jl", "w") as writer:
 		writer.write(data)
 	writer.close()
 
