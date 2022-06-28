@@ -82,3 +82,9 @@ Any event that has the event id on the log can be removed.
 You can find the ID on the log for the event that you want to delete.
 **In order to use this command you must have been added as a bot admin using the “cradmin” command.**
 
+### ```prefix <new_prefix>```
+### Use:
+When your bot is added to your server the default prefix is "=prime ".
+You can change this to a custom prefix using this command.
+You can see your current prefix by looking at the bots name.
+Ex. [=prime]DukePrime
