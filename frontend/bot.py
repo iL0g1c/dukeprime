@@ -71,7 +71,7 @@ def save_stats(stats, id):
 	with jsonlines.open("../backend/guilds.jl", "r") as reader:
 		for obj in reader:
 			if obj["id"] == id:
-				file = "../backend" + obj["file"]
+				file = "../backend/" + obj["file"]
 				break
 		reader.close()
 
