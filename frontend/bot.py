@@ -280,7 +280,7 @@ def round_delta(obj):
 	return timedelta(seconds=secs)
 
 def write_log(event_id, time_stamp, guild_id, user_id, action):
-	with open("log.csv", "a") as f:
+	with open("../backend/log.csv", "a") as f:
 		writer = csv.writer(f)
 		writer.writerow((event_id, time_stamp, guild_id, user_id, action))
 	f.close()
