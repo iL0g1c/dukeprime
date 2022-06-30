@@ -834,16 +834,17 @@ async def on(ctx):
 	embed.add_field(name="Time: ", value=str(f"{time_zone}: {time_amount.strftime('%H:%M:%S')}"))
 	embed.add_field(name="Action: ", value="Online")
 	stats, event_id, error = log_on(user, date_amount, time_amount, status, stats)
-	
-	time_stamp = datetime.combine(date_amount, time_amount)
-	write_log(event_id, time_stamp, str(ctx.message.guild.id), str(user), "Patrol Start")
-	
 	if error:
+		action = f"Patrol Start Error Code: {error}"
 		await ctx.send(get_error(error))
 	else:
+		action = "Patrol Start"		
 		embed.add_field(name="Event ID: ", value=event_id)
 		await ctx.send(embed=embed)
 		save_stats(stats, ctx.message.guild.id)
+
+	time_stamp = datetime.combine(date_amount, time_amount)
+	write_log(event_id, time_stamp, str(ctx.message.guild.id), str(user), action)
 
 @bot.command(brief="Log when you get on radar.", description="Log when you get on radar.")
 async def radon(ctx):
@@ -865,15 +866,17 @@ async def radon(ctx):
 	embed.add_field(name="Action: ", value="Online")
 	stats, event_id, error = radar_on(user, date_amount, time_amount, status, stats)
 	
-	time_stamp = datetime.combine(date_amount, time_amount)
-	write_log(event_id, time_stamp, str(ctx.message.guild.id), str(user), "Radar Patrol Start")
-	
 	if error:
+		action = f"Radar Patrol Start Error Code: {error}"
 		await ctx.send(get_error(error))
 	else:
+		action = "Radar Patrol Start"		
 		embed.add_field(name="Event ID: ", value=event_id)
 		await ctx.send(embed=embed)
 		save_stats(stats, ctx.message.guild.id)
+
+	time_stamp = datetime.combine(date_amount, time_amount)
+	write_log(event_id, time_stamp, str(ctx.message.guild.id), str(user), action)
 
 @bot.command(brief="Log when you get offline.", description="Log when you get offline.")
 async def off(ctx):
@@ -895,12 +898,11 @@ async def off(ctx):
 	embed.add_field(name="Action: ", value="Offline")
 	stats, duration, patrols, total, event_id, error = log_off(user, date_amount, time_amount, status, stats)
 	
-	time_stamp = datetime.combine(date_amount, time_amount)
-	write_log(event_id, time_stamp, str(ctx.message.guild.id), str(user), "Patrol End")
-	
 	if error:
+		action = f"Patrol End Error Code: {error}"
 		await ctx.send(get_error(error))
 	else:
+		action = "Patrol End"
 		embed.add_field(name="Total Patrols: ", value=str(patrols))
 		embed.add_field(name="Total Time: ", value=str(total))
 		embed.add_field(name="Event ID: ", value=event_id)
@@ -908,6 +910,9 @@ async def off(ctx):
 		await ctx.send(embed=embed)
 		save_stats(stats, ctx.message.guild.id)
 
+	time_stamp = datetime.combine(date_amount, time_amount)
+	write_log(event_id, time_stamp, str(ctx.message.guild.id), str(user), action)
+	
 	stats, error = load_stats(ctx.message.guild.id)
 	logged = confirm_patrol(stats, ctx.message.author.id)
 	if not logged:
@@ -938,12 +943,11 @@ async def radoff(ctx):
 	embed.add_field(name="Action: ", value="Offline")
 	stats, duration, patrols, total, event_id, error = radar_off(user, date_amount, time_amount, status, stats)
 	
-	time_stamp = datetime.combine(date_amount, time_amount)
-	write_log(event_id, time_stamp, str(ctx.message.guild.id), str(user), "Radar Patrol End")
-	
 	if error:
+		action = f"Radar Patrol End Error Code: {error}"
 		await ctx.send(get_error(error))
 	else:
+		action = "Radar Patrol End"
 		embed.add_field(name="Total Radar Patrols: ", value=str(patrols))
 		embed.add_field(name="Total Time: ", value=str(total))
 		embed.add_field(name="Event ID: ", value=event_id)
@@ -1275,4 +1279,5 @@ async def prefix(ctx, token):
 	write_log(None, time_stamp, str(ctx.message.guild.id), str(ctx.message.author.id), "Changed prefix.")
 
 #runs the bot
+#TOKEN = os.environ['bot_token']
 bot.run(TOKEN)
