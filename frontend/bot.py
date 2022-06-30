@@ -10,6 +10,8 @@ import random
 import csv
 from dotenv import load_dotenv
 
+database_path = "/var/www/backend/database/"
+
 def load_stats(id):
 	#Loads the data from each user from a jsonlines file.
 	#Loads every command.
@@ -17,11 +19,11 @@ def load_stats(id):
 	guild_check = False
 	#locates the location of the guilds json
 	#by scanning for the file id.
-	with jsonlines.open("../backend/guilds.jl", "r") as reader:
+	with jsonlines.open(f"{database_path}guilds.jl", "r") as reader:
 		for obj in reader:
 			if obj["id"] == id:
 				guild_check = True
-				file = "../backend/" + obj["file"]
+				file = database_path + obj["file"]
 				break
 	reader.close()
 
@@ -39,7 +41,7 @@ def load_stats(id):
 def load_guilds():
 	#Loads all the guild files and returns them.
 	guilds = []
-	with jsonlines.open("../backend/guilds.jl") as reader:
+	with jsonlines.open(f"{database_path}guilds.jl") as reader:
 		for obj in reader:
 			guilds.append(obj)
 	reader.close()
@@ -56,7 +58,7 @@ def load_data():
 	#Loads the global data for the bot.
 	#Right now only includes the id counter.
 	data = []
-	with jsonlines.open("../backend/data.jl") as reader:
+	with jsonlines.open(f"{database_path}data.jl") as reader:
 		for obj in reader:
 			data.append(obj)
 	reader.close()
@@ -68,10 +70,10 @@ def save_stats(stats, id):
 	#immediate data loss.
 
 	#Locates the guild file to be read.
-	with jsonlines.open("../backend/guilds.jl", "r") as reader:
+	with jsonlines.open(f"{database_path}guilds.jl", "r") as reader:
 		for obj in reader:
 			if obj["id"] == id:
-				file = "../backend/" + obj["file"]
+				file = database_path + obj["file"]
 				break
 		reader.close()
 
@@ -82,13 +84,13 @@ def save_stats(stats, id):
 
 def save_guilds(guilds):
 	#Saves the updated guild registry.
-	with jsonlines.open("../backend/guilds.jl", "w") as writer:
+	with jsonlines.open(f"{database_path}guilds.jl", "w") as writer:
 		writer.write_all(guilds)
 	writer.close()
 
 def save_data(data):
 	#Saves the data in the global data file.
-	with jsonlines.open("../backend/data.jl", "w") as writer:
+	with jsonlines.open(f"{database_path}data.jl", "w") as writer:
 		writer.write(data)
 	writer.close()
 
@@ -280,7 +282,7 @@ def round_delta(obj):
 	return timedelta(seconds=secs)
 
 def write_log(event_id, time_stamp, guild_id, user_id, action):
-	with open("../backend/log.csv", "a") as f:
+	with open(f"{database_path}log.csv", "a") as f:
 		writer = csv.writer(f)
 		writer.writerow((event_id, time_stamp, guild_id, user_id, action))
 	f.close()
