@@ -3,12 +3,11 @@ from flask import request, jsonify
 import jsonlines
 
 app = flask.Flask(__name__)
-app.config["DEBUG"] = True
-
+file_path = "/var/www/backend/database/"
 @app.route("/api/servers/all", methods=["GET"])
 def all_servers():
     guilds = []
-    with jsonlines.open("../database/guilds.jl", "r") as reader:
+    with jsonlines.open(f"{file_path}guilds.jl", "r") as reader:
         for obj in reader:
             guilds.append(obj)
     reader.close()
@@ -21,7 +20,7 @@ def server_by_id():
     else:
         return "Error: No id field provided."
     
-    with jsonlines.open("../database/guilds.jl", "r") as reader:
+    with jsonlines.open(f"{file_path}guilds.jl", "r") as reader:
         for obj in reader:
             if obj["id"] == id:
                 return obj
@@ -34,7 +33,7 @@ def all_server_users():
         return "Error: No server_id field provided."
     
     users = []
-    with jsonlines.open(f"../database/{server_id}.jl", "r") as reader:
+    with jsonlines.open(f"{file_path}{server_id}.jl", "r") as reader:
         for obj in reader:
             users.append(obj)
     return jsonify(users)
@@ -50,7 +49,7 @@ def get_user():
     else:
         return "Error: No server_id field provided."
     
-    with jsonlines.open(f"../database/{server_id}.jl", "r") as reader:
+    with jsonlines.open(f"{file_path}{server_id}.jl", "r") as reader:
         for obj in reader:
             if obj["user"] == user_id:
                 return obj
@@ -62,11 +61,13 @@ def search_user():
     else:
         return "Error: No id field provided."
     
-    with jsonlines.open("../database/guilds.jl", "r") as reader_one:
+    with jsonlines.open(f"{file_path}guilds.jl", "r") as reader_one:
         for obj in reader_one:
-            with jsonlines.open(f"../database/{obj['file']}") as reader_two:
+            with jsonlines.open(f"{file_path}{obj['file']}") as reader_two:
                 for item in reader_two:
                     if item["user"] == id:
                         return {"user_data": item, "server": obj["id"]}
 
-app.run()
+
+if __name__ == "__main__":
+    app.run()
