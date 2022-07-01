@@ -1260,7 +1260,7 @@ async def pilot_error(ctx, error): # This might need to be (error, ctx), I'm not
 @bot.command(brief="help")#custom help command
 #links users to the duke discord server and the docs.
 async def help(ctx):
-	embed = discord.Embed(title="Help", description="Hello! You can read the docs at: https://docs.google.com/document/d/1hxAbbJpoXaGzsTi2-2dDvzL15oqFUAXTxNhgd3LHUAI/edit?usp=sharing\n Or if you have farther questions you can contact Duke at: https://discord.gg/qYmdfA4NGa", color=0xFF5733)
+	embed = discord.Embed(title="Help", description="Hello! You can read the docs at: https://github.com/iL0g1c/dukeprime#readme\n Or if you have farther questions you can contact Duke at: https://discord.gg/qYmdfA4NGa", color=0xFF5733)
 	await ctx.send(embed=embed)
 
 @bot.command(pass_context=True)
