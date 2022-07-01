@@ -1,46 +1,72 @@
-from flask import Flask, request
-from flask_restful import Resource, Api, reqparse
-import jsonlines as jl
-import ast
+import flask
+from flask import request, jsonify
+import jsonlines
 
-app = Flask(__name__)
-api = Api(app)
-file_path = "/var/www/backend/database/"
-def get_guild(guild_id):
-    with jl.open(file_path + "guilds.jl", "r") as reader:
+app = flask.Flask(__name__)
+app.config["DEBUG"] = True
+
+@app.route("/api/servers/all", methods=["GET"])
+def all_servers():
+    guilds = []
+    with jsonlines.open("../database/guilds.jl", "r") as reader:
         for obj in reader:
-            if obj["id"] == guild_id:
-                data = obj
-                break
+            guilds.append(obj)
     reader.close()
-    return guild_id
-
-def get_user(user_id, guild_id):
-    guild = []
-    with jl.open(f"{file_path}{guild_id}.jl", "r") as reader:
+    return jsonify(guilds)
+    
+@app.route("/api/servers", methods=["GET"])
+def server_by_id():
+    if "id" in request.args:
+        id = int(request.args["id"])
+    else:
+        return "Error: No id field provided."
+    
+    with jsonlines.open("../database/guilds.jl", "r") as reader:
         for obj in reader:
-            guild.append(obj)
-    reader.close()
-    for user in guild:
-        if user["user"] == user_id:
-            return user
+            if obj["id"] == id:
+                return obj
 
-class Servers(Resource):
-    def get(self):
-        server_id = request.args.get("server_id")
-        data = get_guild(int(server_id))
-        return {"data": data}, 200
+@app.route("/api/servers/users/all", methods=["GET"])
+def all_server_users():
+    if "server_id" in request.args:
+        server_id = int(request.args["server_id"])
+    else:
+        return "Error: No server_id field provided."
+    
+    users = []
+    with jsonlines.open(f"../database/{server_id}.jl", "r") as reader:
+        for obj in reader:
+            users.append(obj)
+    return jsonify(users)
 
-class Users(Resource):
-    def get(self):
-        server_id = request.args.get("server_id")
-        user_id = request.args.get("user_id")
-        guild_id = get_guild(int(server_id))
-        data = get_user(int(user_id), guild_id)
-        return {"data": data}, 200
+@app.route("/api/servers/users", methods=["GET"])
+def get_user():
+    if "server_id" in request.args:
+        if "user_id" in request.args:
+            server_id = int(request.args["server_id"])
+            user_id = int(request.args["user_id"])
+        else:
+            return "Error: No user_id field provided."
+    else:
+        return "Error: No server_id field provided."
+    
+    with jsonlines.open(f"../database/{server_id}.jl", "r") as reader:
+        for obj in reader:
+            if obj["user"] == user_id:
+                return obj
 
-api.add_resource(Servers, '/servers')
-api.add_resource(Users, '/users')
+@app.route("/api/users")
+def search_user():
+    if "id" in request.args:
+        id = int(request.args["id"])
+    else:
+        return "Error: No id field provided."
+    
+    with jsonlines.open("../database/guilds.jl", "r") as reader_one:
+        for obj in reader_one:
+            with jsonlines.open(f"../database/{obj['file']}") as reader_two:
+                for item in reader_two:
+                    if item["user"] == id:
+                        return {"user_data": item, "server": obj["id"]}
 
-if __name__ == '__main__':
-    app.run()
+app.run()
