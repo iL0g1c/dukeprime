@@ -35,7 +35,7 @@ def load_data():
   return data[0]
 
 def convert_database():
-    database = client.converttest
+    database = client.dukeprime
     users = database.users
     patrols = database.patrols
     radars = database.radars
