@@ -8,97 +8,23 @@ import json
 from operator import itemgetter
 import random
 import csv
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
+import pprint
+from pymongo import MongoClient
 
-database_path = "/var/www/backend/database-beta/"
+load_dotenv(find_dotenv())
+password = os.environ.get("MONGODB_PWD")
+connection_string = f"mongodb://mongo_db_admin:password@45.76.164.130:27017/?directConnection=true&serverSelectionTimeoutMS=2000&authSource=admin&appName=mongosh+1.5.0"
+client = MongoClient(connection_string)
+database = client.dukeprime
 
-def load_stats(id):
-	#Loads the data from each user from a jsonlines file.
-	#Loads every command.
-	stats = []
-	guild_check = False
-	#locates the location of the guilds json
-	#by scanning for the file id.
-	with jsonlines.open(f"{database_path}guilds.jl", "r") as reader:
-		for obj in reader:
-			if obj["id"] == id:
-				guild_check = True
-				file = database_path + obj["file"]
-				break
-	reader.close()
-
-	if not guild_check:
-		return None, 15
-	
-	#uses the guild filename to load all of the
-	#lines for the guild.
-	with jsonlines.open(file) as reader:
-		for obj in reader:
-			stats.append(obj)
-	reader.close()
-	return stats, None
-
-def load_guilds():
-	#Loads all the guild files and returns them.
-	guilds = []
-	with jsonlines.open(f"{database_path}guilds.jl") as reader:
-		for obj in reader:
-			guilds.append(obj)
-	reader.close()
-	return guilds
 
 def load_prefix(bot, message):
-	guilds = load_guilds()
-	for guild in guilds:
-		if guild["id"] == message.guild.id:
-			return guild["prefix"]
-	return "=prime "
-
-def load_data():
-	#Loads the global data for the bot.
-	#Right now only includes the id counter.
-	data = []
-	with jsonlines.open(f"{database_path}data.jl") as reader:
-		for obj in reader:
-			data.append(obj)
-	reader.close()
-	return data[0]
-
-def save_stats(stats, id):
-	#Saves the data after every command is complete.
-	#This is so that a bot crash will only result in
-	#immediate data loss.
-
-	#Locates the guild file to be read.
-	with jsonlines.open(f"{database_path}guilds.jl", "r") as reader:
-		for obj in reader:
-			if obj["id"] == id:
-				file = database_path + obj["file"]
-				break
-		reader.close()
-
-	#saves the data in the proper file.
-	with jsonlines.open(file, "w") as writer:
-		writer.write_all(stats)
-	writer.close()
-
-def save_guilds(guilds):
-	#Saves the updated guild registry.
-	with jsonlines.open(f"{database_path}guilds.jl", "w") as writer:
-		writer.write_all(guilds)
-	writer.close()
-
-def save_data(data):
-	#Saves the data in the global data file.
-	with jsonlines.open(f"{database_path}data.jl", "w") as writer:
-		writer.write(data)
-	writer.close()
-
-def create_stats(file):
-	#creates the guilds personal file when
-	#registering in the registry.
-	f = open(file, "x")
-	f.close()
+  guild = list(database.guilds.find({"server_id": message.guild.id}))[0]
+  if guild == None:
+    return "=prime "
+  return guild["prefix"]
+  
 
 def registry_trans():
 	print("Updating registry data structure...")
@@ -587,8 +513,8 @@ def do_top(stats, mode, span):
 		return stats, None, 11
 		
 	#gets the constants for the different parameters.
-	day_date = date.today() 
-	day = datetime(day_date.year, day_date.month, day_date.day) 
+	day_date = date.today()
+	day = datetime(day_date.year, day_date.month, day_date.day)
 	week_date = day_date - timedelta(days=((day_date.isoweekday() + 1) % 7)) + timedelta(days=1)
 	week = datetime(week_date.year, week_date.month, week_date.day, 0, 0, 0)
 	month = datetime(day_date.year, day_date.month, 1)
@@ -838,7 +764,7 @@ async def on(ctx):
 		action = f"Patrol Start Error Code: {error}"
 		await ctx.send(get_error(error))
 	else:
-		action = "Patrol Start"		
+		action = "Patrol Start"
 		embed.add_field(name="Event ID: ", value=event_id)
 		await ctx.send(embed=embed)
 		save_stats(stats, ctx.message.guild.id)
@@ -870,7 +796,7 @@ async def radon(ctx):
 		action = f"Radar Patrol Start Error Code: {error}"
 		await ctx.send(get_error(error))
 	else:
-		action = "Radar Patrol Start"		
+		action = "Radar Patrol Start"
 		embed.add_field(name="Event ID: ", value=event_id)
 		await ctx.send(embed=embed)
 		save_stats(stats, ctx.message.guild.id)
