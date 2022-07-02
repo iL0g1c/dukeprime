@@ -101,14 +101,7 @@ def create_stats(file):
 	f.close()
 
 def registry_trans():
-	print("Updating registry data structure...")
-	guilds = load_guilds()
-	for i in range(len(guilds)):
-		print(f"Updating guilds {i+1} out of {len(guilds)}")
-		guilds[i]["prefix"] = "=prime "
-		stats = load_stats(guilds[i]["id"])[0]
-	save_guilds(guilds)
-	print("Complete.")
+	pass
 	
 
 def get_total_patrols(patrols, user):
@@ -587,8 +580,8 @@ def do_top(stats, mode, span):
 		return stats, None, 11
 		
 	#gets the constants for the different parameters.
-	day_date = date.today() 
-	day = datetime(day_date.year, day_date.month, day_date.day) 
+	day_date = date.today()
+	day = datetime(day_date.year, day_date.month, day_date.day)
 	week_date = day_date - timedelta(days=((day_date.isoweekday() + 1) % 7)) + timedelta(days=1)
 	week = datetime(week_date.year, week_date.month, week_date.day, 0, 0, 0)
 	month = datetime(day_date.year, day_date.month, 1)
@@ -798,7 +791,6 @@ async def on_ready():
 	for guild in activeservers:
 		print(guild.name)
 		full_guilds.append(guild)
-	#await load_channels(full_guilds)
 
 @bot.command(brief="Test the connection.", description="Test the connection.")
 async def ping(ctx):
@@ -838,7 +830,7 @@ async def on(ctx):
 		action = f"Patrol Start Error Code: {error}"
 		await ctx.send(get_error(error))
 	else:
-		action = "Patrol Start"		
+		action = "Patrol Start"
 		embed.add_field(name="Event ID: ", value=event_id)
 		await ctx.send(embed=embed)
 		save_stats(stats, ctx.message.guild.id)
@@ -870,7 +862,7 @@ async def radon(ctx):
 		action = f"Radar Patrol Start Error Code: {error}"
 		await ctx.send(get_error(error))
 	else:
-		action = "Radar Patrol Start"		
+		action = "Radar Patrol Start"
 		embed.add_field(name="Event ID: ", value=event_id)
 		await ctx.send(embed=embed)
 		save_stats(stats, ctx.message.guild.id)
@@ -1273,7 +1265,7 @@ async def prefix(ctx, token):
 	if error:
 		await ctx.send(get_error(error))
 		return
-	await ctx.message.guild.me.edit(nick=f"[{token}] DukePrime|Beta")
+	await ctx.message.guild.me.edit(nick=f"[{token}]DukePrime")
 	await ctx.send("Changed my prefix to: " + token)
 	time_stamp = datetime.now()
 	write_log(None, time_stamp, str(ctx.message.guild.id), str(ctx.message.author.id), "Changed prefix.")
