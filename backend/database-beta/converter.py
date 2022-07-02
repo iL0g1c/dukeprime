@@ -35,7 +35,7 @@ def load_data():
   return data[0]
 
 def convert_database():
-    database = client.converttest
+    database = client.dukeprime
     users = database.users
     patrols = database.patrols
     radars = database.radars
@@ -44,14 +44,21 @@ def convert_database():
     sars = database.sars
     global_data = database.global_data
     guilds = database.guilds
-    guilds = load_guilds()
+    guilds_list = load_guilds()
     user_doc, patrol_doc, radar_doc, kill_doc, disable_doc, sar_doc, global_data_doc, guilds_doc = [], [], [], [], [], [], [], []
-    for obj in guilds:
-      guilds_doc.append({
-        "server_id": obj["id"],
-        "announcement_channel": obj["announcement"],
-        "prefix": obj["prefix"]
-      })
+    for obj in guilds_list:
+      try:
+        guilds_doc.append({
+          "server_id": obj["id"],
+          "announcement_channel": obj["announce"],
+          "prefix": obj["prefix"]
+        })
+      except:
+        guilds_doc.append({
+          "server_id": obj["id"],
+          "announcement_channel": None,
+          "prefix": obj["prefix"]
+        })
       stats = load_stats(obj["file"])
       for item in stats:
         user_doc.append({
@@ -102,6 +109,8 @@ def convert_database():
             "time": sar["end"]
           })
     global_data_doc = load_data()
+    if guilds_doc != []:
+      guilds.insert_many(guilds_doc)
     if user_doc != []:
       users.insert_many(user_doc)
     if patrol_doc != []:
