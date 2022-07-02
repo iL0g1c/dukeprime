@@ -35,7 +35,7 @@ def load_data():
   return data[0]
 
 def convert_database():
-    database = client.dukeprime
+    database = client.converttest
     users = database.users
     patrols = database.patrols
     radars = database.radars
@@ -43,58 +43,64 @@ def convert_database():
     disables = database.disables
     sars = database.sars
     global_data = database.global_data
+    guilds = database.guilds
     guilds = load_guilds()
-    user_doc, patrol_doc, radar_doc, kill_doc, disable_doc, sar_doc, global_data_doc = [], [], [], [], [], [], []
+    user_doc, patrol_doc, radar_doc, kill_doc, disable_doc, sar_doc, global_data_doc, guilds_doc = [], [], [], [], [], [], [], []
     for obj in guilds:
-        stats = load_stats(obj["file"])
-        for item in stats:
-          user_doc.append({
+      guilds_doc.append({
+        "server_id": obj["id"],
+        "announcement_channel": obj["announcement"],
+        "prefix": obj["prefix"]
+      })
+      stats = load_stats(obj["file"])
+      for item in stats:
+        user_doc.append({
+          "user_id": item["user"],
+          "on_patrol": item["status"][0],
+          "on_radar": item["status"][1],
+          "cur_patrol": item["cur_patrol"],
+          "cur_radar": item["cur_radar"],
+          "sar_needed": item["sar_needed"],
+          "superuser": item["admin"]
+        })
+        for patrol in item["patrols"]:
+          patrol_doc.append({
+            "event_id": patrol["id"],
             "user_id": item["user"],
-            "on_patrol": item["status"][0],
-            "on_radar": item["status"][1],
-            "cur_patrol": item["cur_patrol"],
-            "cur_radar": item["cur_radar"],
-            "sar_needed": item["sar_needed"],
-            "superuser": item["admin"]
+            "server_id": obj["id"],
+            "start": patrol["start"],
+            "end": patrol["end"]
           })
-          for patrol in item["patrols"]:
-            patrol_doc.append({
-              "event_id": patrol["id"],
-              "user_id": item["user"],
-              "server_id": obj["id"],
-              "start": patrol["start"],
-              "end": patrol["end"]
-            })
-          for radar in item["radars"]:
-            radar_doc.append({
-              "event_id": radar["id"],
-              "user_id": item["user"],
-              "server_id": obj["id"],
-              "start": radar["start"],
-              "end": radar["end"]
-            })
-          for kill in item["kills"]:
-            kill_doc.append({
-              "event_id": kill["id"],
-              "user_id": item["user"],
-              "server_id": obj["id"],
-              "time": kill["end"]
-            })
-          for disable in item["disables"]:
-            disable_doc.append({
-              "event_id": disable["id"],
-              "user_id": item["user"],
-              "server_id": obj["id"],
-              "time": disable["end"]
-            })
-          for sar in item["sars"]:
-            sar_doc.append({
-              "event_id": sar["id"],
-              "user_id": item["user"],
-              "server_id": obj["id"],
-              "pilot_id": sar["pilot"],
-              "time": sar["end"]
-            })
+        for radar in item["radars"]:
+          radar_doc.append({
+            "event_id": radar["id"],
+            "user_id": item["user"],
+            "server_id": obj["id"],
+            "start": radar["start"],
+            "end": radar["end"]
+          })
+        for kill in item["kills"]:
+          kill_doc.append({
+            "event_id": kill["id"],
+            "user_id": item["user"],
+            "server_id": obj["id"],
+            "time": kill["end"]
+          })
+        for disable in item["disables"]:
+          disable_doc.append({
+            "event_id": disable["id"],
+            "user_id": item["user"],
+            "server_id": obj["id"],
+            "time": disable["end"]
+          })
+        for sar in item["sars"]:
+          sar_doc.append({
+            "event_id": sar["id"],
+            "user_id": item["user"],
+            "server_id": obj["id"],
+            "pilot_id": sar["pilot"],
+            "time": sar["end"]
+          })
     global_data_doc = load_data()
     if user_doc != []:
       users.insert_many(user_doc)
