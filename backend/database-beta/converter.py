@@ -3,12 +3,19 @@ import os
 import pprint
 from pymongo import MongoClient
 import jsonlines as jl
+from datetime import datetime
 load_dotenv(find_dotenv())
 
 password = os.environ.get("MONGODB_PWD")
 
 connection_string = f"mongodb://mongo_db_admin:password@45.76.164.130:27017/?directConnection=true&serverSelectionTimeoutMS=2000&authSource=admin&appName=mongosh+1.5.0"
 client = MongoClient(connection_string)
+
+def string_to_datetime(string):
+    if string == None:
+        return None
+    datetime_obj = datetime.strptime(string, "%Y-%m-%d %H:%M:%S.%f").replace(microsecond=0)
+    return datetime_obj
 
 def load_guilds():
     guilds = []
@@ -63,10 +70,7 @@ def convert_database():
       for item in stats:
         user_doc.append({
           "user_id": item["user"],
-          "on_patrol": item["status"][0],
-          "on_radar": item["status"][1],
-          "cur_patrol": item["cur_patrol"],
-          "cur_radar": item["cur_radar"],
+          "server_id": obj["id"],
           "sar_needed": item["sar_needed"],
           "superuser": item["admin"]
         })
@@ -75,30 +79,30 @@ def convert_database():
             "event_id": patrol["id"],
             "user_id": item["user"],
             "server_id": obj["id"],
-            "start": patrol["start"],
-            "end": patrol["end"]
+            "start": string_to_datetime(patrol["start"]),
+            "end": string_to_datetime(patrol["end"])
           })
         for radar in item["radars"]:
           radar_doc.append({
             "event_id": radar["id"],
             "user_id": item["user"],
             "server_id": obj["id"],
-            "start": radar["start"],
-            "end": radar["end"]
+            "start": string_to_datetime(radar["start"]),
+            "end": string_to_datetime(radar["end"])
           })
         for kill in item["kills"]:
           kill_doc.append({
             "event_id": kill["id"],
             "user_id": item["user"],
             "server_id": obj["id"],
-            "time": kill["end"]
+            "time": string_to_datetime(kill["end"])
           })
         for disable in item["disables"]:
           disable_doc.append({
             "event_id": disable["id"],
             "user_id": item["user"],
             "server_id": obj["id"],
-            "time": disable["end"]
+            "time": string_to_datetime(disable["end"])
           })
         for sar in item["sars"]:
           sar_doc.append({
@@ -106,7 +110,7 @@ def convert_database():
             "user_id": item["user"],
             "server_id": obj["id"],
             "pilot_id": sar["pilot"],
-            "time": sar["end"]
+            "time": string_to_datetime(sar["end"])
           })
     global_data_doc = load_data()
     if guilds_doc != []:
