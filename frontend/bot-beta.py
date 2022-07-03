@@ -751,7 +751,7 @@ async def on_guild_join(guild):
 
 @bot.command(brief="Log when you get online.", description="Log when you get online.")
 async def on(ctx):
-  datetime_amount = datetime.now(timezone.utc).replace(microsecond=0)
+  datetime_amount = datetime.now().replace(microsecond=0)
 	time_zone = datetime_amount.astimezone().tzinfo
 	
 	embed = discord.Embed(title="Patrol Event",
@@ -804,8 +804,10 @@ async def off(ctx):
 	user_id = ctx.message.author.id
 	server_id = ctx.message.guild.id
 	
-	datetime_amount = datetime.now(timezone.utc).replace(microsecond=0)
+	datetime_amount = datetime.now().replace(microsecond=0)
 	time_zone = datetime_amount.astimezone().tzinfo
+	
+  print(datetime_amount.tzinfo)
 	
 	embed = discord.Embed(title="Patrol Event",
 						 description=f"{ctx.message.author.mention} has ended their patrol.",
@@ -847,7 +849,7 @@ async def radoff(ctx):
 	user = ctx.message.author.id
 	date_amount = date.today()
 	time_amount = datetime.now().time()
-	time_zone = datetime.now(timezone.utc).astimezone().tzinfo
+	time_zone = datetime.now().astimezone().tzinfo
 	status = "offline"
 	embed = discord.Embed(title="Radar Event",
 						 description=f"{ctx.message.author.mention} has ended their patrol.",
