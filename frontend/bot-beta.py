@@ -193,10 +193,10 @@ def round_seconds(obj):
     
     return output
 
-def write_log(event_id, time_stamp, guild_id, user_id, action):
+def write_log(event_id, datetime_amount, server_id, user_id, action):
     with open(f"/var/www/backend/database-beta/log.csv", "a") as f:
         writer = csv.writer(f)
-        writer.writerow((event_id, time_stamp, guild_id, user_id, action))
+        writer.writerow((event_id, datetime_amount, server_id, user_id, action))
     f.close()
 
 def log_on(user_id, server_id, datetime_amount):
@@ -403,42 +403,76 @@ def confirm_radar(user_id, server_id):
         return True
     return False
     
-def do_kill(user, date_amount, time_amount, stats):
+def do_kill(user_id, server_id, datetime_amount):
     user_check = False
-    #scans for the currect user.
-    for item in stats:
-        if item["user"] == user:
-            user_check = True
-            #adds an entry log for the kill
-            id = get_id()
-            item["kills"].append({
-                "id": id,
-                "end": str(datetime.combine(date_amount, time_amount))
-            })
-            #retrieves the number of kills and
-            #disables.
-            kills = len(item["kills"])
-            disables = len(item["disables"])
-            event_id = id
-            return stats, kills, disables, event_id, None
+    #identifies the valid online user.
+    users = list(database.users.find({
+        "$and": [
+            {"user_id": Int64(user_id)},
+            {"server_id": Int64(server_id)}
+        ]
+    }))
+    if users != []:
+        user_check = True
+        #adds an entry log for the kill
+        event_id = get_id()
+        kill_data = database.kills
+        kill_data.insert_one({
+            "event_id": event_id,
+            "user_id": user_id,
+            "server_id": server_id,
+            "time": datetime_amount
+        })
+        kills = len(list(database.kills.find({
+            "$and": [
+                {"user_id": Int64(user_id)},
+                {"server_id": Int64(server_id)}
+            ]
+        })))
+        disables = len(list(database.disables.find({
+            "$and": [
+                {"user_id": Int64(user_id)},
+                {"server_id": Int64(server_id)}
+            ]
+        })))
+        return kills, disables, event_id, None
     if not user_check:
-        return stats, None, None, None, 3
-def do_disable(user, date_amount, time_amount, stats):
+        return None, None, None, 3
+def do_disable(user_id, server_id, datetime_amount):
     user_check = False
-    #locates the correct user json.
-    for item in stats:
-        if item["user"] == user:
-            user_check = True
-            #does the same thing as for kills.
-            id = get_id()
-            item["disables"].append({
-                "id": id,
-                "end": str(datetime.combine(date_amount, time_amount))
-            })
-            kills = len(item["kills"])
-            disables = len(item["disables"])
-            return stats, kills, disables, id, None
-    return stats, None, None, None, 3
+    #identifies the valid online user.
+    users = list(database.users.find({
+        "$and": [
+            {"user_id": Int64(user_id)},
+            {"server_id": Int64(server_id)}
+        ]
+    }))
+    if users != []:
+        user_check = True
+        #adds an entry log for the kill
+        event_id = get_id()
+        disable_data = database.disables
+        disable_data.insert_one({
+            "event_id": event_id,
+            "user_id": user_id,
+            "server_id": server_id,
+            "time": datetime_amount
+        })
+        kills = len(list(database.kills.find({
+            "$and": [
+                {"user_id": Int64(user_id)},
+                {"server_id": Int64(server_id)}
+            ]
+        })))
+        disables = len(list(database.disables.find({
+            "$and": [
+                {"user_id": Int64(user_id)},
+                {"server_id": Int64(server_id)}
+            ]
+        })))
+        return kills, disables, event_id, None
+    if not user_check:
+        return None, None, None, 3
 
 def record_sar(user, date_amount, time_amount, action, pilot, stats):
     action_check = False
@@ -842,7 +876,7 @@ async def off(ctx):
         embed.set_footer(text=f"This patrol lasted {str(duration)}")
         await ctx.send(embed=embed)
 
-    write_log(event_id, datetime_amount, str(server_id), str(user_id), action)
+    write_log(event_id, str(datetime_amount), str(server_id), str(user_id), action)
     logged = confirm_patrol(user_id, server_id)
     if not logged:
         await ctx.send("An error has occured and your patrol has not been logged. Try closing your patrol again.")
@@ -880,7 +914,7 @@ async def radoff(ctx):
         embed.set_footer(text=f"This radar patrol lasted {str(duration)}")
         await ctx.send(embed=embed)
 
-    write_log(event_id, datetime_amount, str(server_id), str(user_id), action)
+    write_log(event_id, str(datetime_amount), str(server_id), str(user_id), action)
     logged = confirm_radar(user_id, server_id)
     if not logged:
         await ctx.send("An error has occured and your patrol has not been logged. Try closing your patrol again.")
@@ -892,25 +926,22 @@ async def radoff(ctx):
 
 @bot.command(brief="Log when you get a kill.", description="Log when you get a kill.")
 async def kill(ctx):
-    stats, error=load_stats(ctx.message.guild.id)
-    if error:
-        await ctx.send(get_error(error))
-        return
-    user = ctx.message.author.id
-    date_amount = date.today()
-    time_amount = datetime.now().time()
-    time_zone = datetime.now(timezone.utc).astimezone().tzinfo
+    user_id = ctx.message.author.id
+    server_id = ctx.message.guild.id
+    
+    datetime_amount = datetime.now().replace(microsecond=0)
+    time_zone = datetime_amount.astimezone().tzinfo
+    
     embed = discord.Embed(title="Flight Event",
                          description=f"{ctx.message.author.mention} has killed a foe.",
                          color=0xFF5733)
     embed.add_field(name="Name: ", value=ctx.message.author.mention)
-    embed.add_field(name="Date: ", value=date_amount)
-    embed.add_field(name="Time: ", value=str(f"{time_zone}: {time_amount.strftime('%H:%M:%S')}"))
+    embed.add_field(name="Date: ", value=str(datetime_amount.date()))
+    embed.add_field(name="Time: ", value=str(f"{time_zone}: {datetime_amount.time()}"))
     embed.add_field(name="Action: ", value="Kill")
-    stats, kills, disables, event_id, error = do_kill(user, date_amount, time_amount, stats)
+    kills, disables, event_id, error = do_kill(user_id, server_id, datetime_amount)
 
-    time_stamp = datetime.combine(date_amount, time_amount)
-    write_log(event_id, time_stamp, str(ctx.message.guild.id), str(user), "Kill")
+    write_log(event_id, str(datetime_amount), str(server_id), str(user_id), "Kill")
     
     if error:
         await ctx.send(get_error(error))
@@ -918,29 +949,25 @@ async def kill(ctx):
         embed.add_field(name="Event ID: ", value=event_id)
         embed.set_footer(text=f"{ctx.message.author} has {kills} kills and {disables} Disables.")
         await ctx.send(embed=embed)
-        save_stats(stats, ctx.message.guild.id)
 
 @bot.command(brief="Log when you disable someone.", description="Log when you disable someone.")
 async def disable(ctx):
-    stats, error=load_stats(ctx.message.guild.id)
-    if error:
-        await ctx.send(get_error(error))
-        return
-    user = ctx.message.author.id
-    date_amount = date.today()
-    time_amount = datetime.now().time()
-    time_zone = datetime.now(timezone.utc).astimezone().tzinfo
+    user_id = ctx.message.author.id
+    server_id = ctx.message.guild.id
+    
+    datetime_amount = datetime.now().replace(microsecond=0)
+    time_zone = datetime_amount.astimezone().tzinfo
+    
     embed = discord.Embed(title="Flight Event",
                          description=f"{ctx.message.author.mention} has disabled a foe.",
                          color=0xFF5733)
     embed.add_field(name="Name: ", value=ctx.message.author.mention)
-    embed.add_field(name="Date: ", value=date_amount)
-    embed.add_field(name="Time: ", value=str(f"{time_zone}: {time_amount.strftime('%H:%M:%S')}"))
+    embed.add_field(name="Date: ", value=str(datetime_amount.date()))
+    embed.add_field(name="Time: ", value=str(f"{time_zone}: {datetime_amount.time()}"))
     embed.add_field(name="Action: ", value="Disable")
-    stats, kills, disables, event_id, error = do_disable(user, date_amount, time_amount, stats)
-    
-    time_stamp = datetime.combine(date_amount, time_amount)
-    write_log(event_id, time_stamp, str(ctx.message.guild.id), str(user), "Disable")
+    kills, disables, event_id, error = do_disable(user_id, server_id, datetime_amount)
+
+    write_log(event_id, str(datetime_amount), str(server_id), str(user_id), "Disable")
     
     if error:
         await ctx.send(get_error(error))
@@ -948,7 +975,6 @@ async def disable(ctx):
         embed.add_field(name="Event ID: ", value=event_id)
         embed.set_footer(text=f"{ctx.message.author} has {kills} kills and {disables} Disables.")
         await ctx.send(embed=embed)
-        save_stats(stats, ctx.message.guild.id)
 
 @bot.command(brief="Log when you confirm a foe.", description="Log when you confirm a foe.")
 async def foe(ctx):
