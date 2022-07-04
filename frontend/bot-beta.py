@@ -219,6 +219,15 @@ def log_on(user_id, server_id, datetime_amount):
             {"end": {"$type": 10}}
         ]
     }))
+    else:
+        users = database.users
+        users.insert_one({
+            "user_id": user_id,
+            "server_id": server_id,
+            "sar_needed": False,
+            "superuser": False
+        })
+        return log_on(user_id, server_id, datetime_amount)
     if patrols == []:
         start_check = True
         event_id = get_id()
@@ -231,16 +240,7 @@ def log_on(user_id, server_id, datetime_amount):
             "end": None
         })
         return event_id, None
-    if not user_check:
-        users = database.users
-        users.insert_one({
-            "user_id": user_id,
-            "server_id": server_id,
-            "sar_needed": False,
-            "superuser": False
-        })
-        return log_on(user_id, server_id, datetime_amount)
-    elif not start_check:
+    else:
         return None, 1
 
 def radar_on(user_id, server_id, datetime_amount):
@@ -263,6 +263,15 @@ def radar_on(user_id, server_id, datetime_amount):
             {"end": {"$type": 10}}
         ]
     }))
+    else:
+        users = database.users
+        users.insert_one({
+            "user_id": user_id,
+            "server_id": server_id,
+            "sar_needed": False,
+            "superuser": False
+        })
+        return radar_on(user_id, server_id, datetime_amount)
     if radars == []:
         start_check = True
         event_id = get_id()
@@ -275,16 +284,7 @@ def radar_on(user_id, server_id, datetime_amount):
             "end": None
         })
         return event_id, None
-    if not user_check:
-        users = database.users
-        users.insert_one({
-            "user_id": user_id,
-            "server_id": server_id,
-            "sar_needed": False,
-            "superuser": False
-        })
-        return radar_on(user_id, server_id, datetime_amount)
-    elif not start_check:
+    else:
         return None, 1
 
 def log_off(user_id, server_id, datetime_amount):
@@ -323,11 +323,10 @@ def log_off(user_id, server_id, datetime_amount):
             #calculates the length of the patrol
             duration = end - start
             return duration, len(patrols), total_patrol_time, event_id, None
-    
-    if not user_check:
+        else:
+            return None, None, None, None, 2
+    else:
         return None, None, None, None, 3
-    elif not start_check:
-        return None, None, None, None, 2
 
 def confirm_patrol(user_id, server_id):
     patrols = list(database.patrols.find({
@@ -381,11 +380,10 @@ def radar_off(user_id, server_id, datetime_amount):
             #calculates the length of the patrol
             duration = end - start
             return duration, len(radars), total_radar_time, event_id, None
-    
-    if not user_check:
+        else:
+            return None, None, None, None, 2
+    else:
         return None, None, None, None, 3
-    elif not start_check:
-        return None, None, None, None, 2
 
 def confirm_radar(user_id, server_id):
     radars = list(database.radars.find({
@@ -436,7 +434,7 @@ def do_kill(user_id, server_id, datetime_amount):
             ]
         })))
         return kills, disables, event_id, None
-    if not user_check:
+    else:
         return None, None, None, 3
 def do_disable(user_id, server_id, datetime_amount):
     user_check = False
@@ -471,66 +469,87 @@ def do_disable(user_id, server_id, datetime_amount):
             ]
         })))
         return kills, disables, event_id, None
-    if not user_check:
+    else:
         return None, None, None, 3
 
-def record_sar(user, date_amount, time_amount, action, pilot, stats):
+def record_sar(user_id, server_id, datetime_amount, action, pilot_id):
     action_check = False
     pilot_check = False
     no_pilot_check = False
     user_check = False
     sar_start_check = False
     sar_end_check = False
-    if action == "req":
-        action_check = True
-        #locates the user.
-        for item in stats:
-            if item["user"] == user:
-                user_check = True
-                if pilot == None:
-                    no_pilot_check = True
-                #updates the sar_needed variable to log the request.
-                if stats[stats.index(item)]["sar_needed"] == "no":
-                    sar_start_check = True
-                    stats[stats.index(item)]["sar_needed"] = "yes"
-                    return stats, None, None, None
-    elif action == "give":
-        sar_start_check = True
-        action_check = True
-        no_pilot_check = True
-        for item in stats:
-            if item["user"] == pilot:
+    user_filter = {
+        "$and": [
+            {"user_id": Int64(user_id)},
+            {"server_id": Int64(server_id)}
+        ]
+    }
+    users = list(database.users.find(user_filter))
+        user_check = True
+        if action == "req":
+            sar_end_check = True
+            action_check = True
+            if pilot_id == None:
+                no_pilot_check = True
+            else:
+                return None, None, 5
+            #updates the sar_needed variable to log the request.
+            if users[0]["sar_needed"] == "no":
+                sar_start_check = True
+                user_data = database.users
+                user_data.update_one(
+                    user_filter,
+                    {"$set": {"sar_needed": "yes"}}
+                )
+            else:
+                return None, None, 6
+            count = None
+            event_id = None
+        elif action == "give":
+            action_check = True
+            sar_start_check = True
+            no_pilot_check = True
+            pilot_filter = {
+                "$and": [
+                    {"user_id": Int64(pilot_id)},
+                    {"server_id": Int64(server_id)}
+                ]
+            }
+            pilot = list(database.users.find(pilot_filter))
+            if pilot != []:
                 pilot_check = True
-                if item["sar_needed"] == "yes":
+                if pilot[0]["sar_needed"] == "yes":
                     sar_end_check = True
-                    #reverts the sar request back to normal.
-                    item["sar_needed"] = "no"
-        for item in stats:
-            if item["user"] == user:
-                user_check = True
-                #adds a an sar event log to the user
-                #that did the SAR
-                id = get_id()
-                item["sars"].append({
-                    "id": id,
-                    "end": str(datetime.combine(date_amount, time_amount)),
-                    "pilot": pilot
-                })
-                count = len(item["sars"])
-    if not user_check:
-        if not action_check:
-            return stats, None, None, 4
-        return stats, None, None, 3
-    elif not no_pilot_check:
-        return stats, None, None, 5
-    elif not sar_start_check:
-        return stats, None, None, 6
-    elif not pilot_check:
-        return stats, None, None, 7
-    elif not sar_end_check:
-        return stats, None, None, 8
+                    user_data = database.users
+                    user_data.update_one(
+                        pilot_filter,
+                        {"$set": {"sar_needed": "no"}}
+                    )
+                else:
+                    return None, None, 8
+            else:
+                return None, None, 7
+            event_id = get_id()
+            sar_data = database.sars
+            sar_data.insert_one({
+                "event_id": event_id,
+                "user_id": user_id,
+                "server_id": server_id,
+                "pilot_id": pilot_id,
+                "time": datetime_amount
+            })
+            count = len(list(database.sars.find({
+                "$and": [
+                    {"user_id": Int64(user_id)},
+                    {"server_id": Int64(server_id)}
+                ]
+            })))
+        else:
+            return None, None, 4
     else:
-        return stats, count, id, None
+        return None, None, 3
+    return count, event_id, None
 
 def do_register(server_id, guilds):
         guild_check = True
@@ -978,33 +997,30 @@ async def disable(ctx):
 
 @bot.command(brief="Log when you confirm a foe.", description="Log when you confirm a foe.")
 async def foe(ctx):
-    time_amount = datetime.now().time()
-    time_zone = datetime.now(timezone.utc).astimezone().tzinfo
+    datetime_amount = datetime.now().replace(microsecond=0)
+    time_zone = datetime_amount.astimezone().tzinfo
     embed = discord.Embed(title="Flight Event",
                          description=f"{ctx.message.author.mention} has spotted a foe.",
                          color=0xFF5733)
     embed.add_field(name="Name: ", value=ctx.message.author.mention)
-    embed.add_field(name="Date: ", value=str(date.today()))
-    embed.add_field(name="Time: ", value=str(f"{time_zone}: {time_amount.strftime('%H:%M:%S')}"))
+    embed.add_field(name="Date: ", value=str(datetime_amount.date()))
+    embed.add_field(name="Time: ", value=str(f"{time_zone}: {datetime_amount.time()}"))
     embed.add_field(name="Action: ", value="Foe")
     await ctx.send(embed=embed)
 
 @bot.command(brief="Log when you give and need SAR.", description="Log when you give and need SAR. Action is either <req> (request an SAR) or <give> (give an SAR). When you give an SAR specify the <pilot>.")
 async def sar(ctx, action, pilot: discord.User = None):
-    stats, error=load_stats(ctx.message.guild.id)
-    if error:
-        await ctx.send(get_error(error))
-        return
-    user = ctx.message.author.id
-    date_amount = date.today()
-    time_amount = datetime.now().time()
-    time_zone = datetime.now(timezone.utc).astimezone().tzinfo
+    user_id = ctx.message.author.id
+    server_id = ctx.message.guild.id
+    
+    datetime_amount = datetime.now().replace(microsecond=0)
+    time_zone = datetime_amount.astimezone().tzinfo
     embed = discord.Embed(title="Flight Event",
                          description=f"{ctx.message.author.mention} is requesting SAR.",
                          color=0xFF5733)
     embed.add_field(name="Name: ", value=ctx.message.author.mention)
-    embed.add_field(name="Date: ", value=str(date_amount))
-    embed.add_field(name="Time: ", value=str(f"{time_zone}: {time_amount.strftime('%H:%M:%S')}"))
+    embed.add_field(name="Date: ", value=str(datetime_amount.date()))
+    embed.add_field(name="Time: ", value=str(f"{time_zone}: {datetime_amount.time()}"))
     if action == "req":
         log_action = "SAR Request"
         embed.add_field(name="Action: ", value="SAR Request")
@@ -1013,19 +1029,16 @@ async def sar(ctx, action, pilot: discord.User = None):
         embed.add_field(name="Action: ", value="SAR Given")
     if pilot != None:
         pilot = pilot.id
-    stats, count, event_id, error = record_sar(user, date_amount, time_amount, action, pilot, stats)
-
-    time_stamp = datetime.combine(date_amount, time_amount)
-    write_log(event_id, time_stamp, str(ctx.message.guild.id), str(user), log_action)
-    
+    count, event_id, error = record_sar(user_id, server_id, datetime_amount, action, pilot)
     if error:
         await ctx.send(get_error(error))
+        log_action = f"{log_action}| Error code: {error}"
     else:
         if action == "give":
             embed.add_field(name="SARs: ", value=str(count))
             embed.add_field(name="Event ID: ", value=event_id)
         await ctx.send(embed=embed)
-        save_stats(stats, ctx.message.guild.id)
+    write_log(event_id, str(datetime_amount), str(server_id), str(user_id), log_action)
 @sar.error
 async def info_error(ctx, error): # This might need to be (error, ctx), I'm not sure
         if isinstance(error, commands.BadArgument):
