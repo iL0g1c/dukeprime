@@ -20,17 +20,17 @@ client = MongoClient(connection_string)
 database = client.dukeprime
 
 def load_prefix(bot, message):
-  guild = list(database.guilds.find({"server_id": message.guild.id}))[0]
-  if guild == None:
-    return "=prime "
-  return guild["prefix"]
+	guild = list(database.guilds.find({"server_id": message.guild.id}))[0]
+	if guild == None:
+		return "=prime "
+	return guild["prefix"]
 
 def get_total_time(user_id, server_id):
 	patrols = list(database.patrols.find({
-	  "$and": [
-	    {"user_id": user_id},
-	    {"server_id": server_id}
-	  ]
+		"$and": [
+			{"user_id": user_id},
+			{"server_id": server_id}
+		]
 	}))
 	
 	total = timedelta(seconds=0)
@@ -200,120 +200,121 @@ def write_log(event_id, time_stamp, guild_id, user_id, action):
 	f.close()
 
 def log_on(user_id, server_id, datetime_amount):
-  user_check = False
-  start_check = False
-  users = list(database.users.find({
-    "$and": [
-      {"user_id": Int64(user_id)},
-      {"server_id": Int64(server_id)}
-    ]
-  }))
-  if users != []:
-    user_check = True
-    patrols = list(database.patrols.find({
-      "$and": [
-          {"$and": [
-            {"user_id": Int64(user_id)},
-            {"server_id": Int64(server_id)}
-          ]},
-          {"end": {"$type": 10}}
-        ]
-    }))
-    if patrols == []:
-      start_check = True
-      event_id = get_id()
-      patrols = database.patrols
-      patrols.insert_one({
-        "event_id": event_id,
-        "user_id": user_id,
-        "server_id": server_id,
-        "start": datetime_amount,
-        "end": None
-      })
-      return event_id, None
-  if not user_check:
-    users = database.users
-    users.insert_one({
-      "user_id": user_id,
-      "server_id": server_id,
-      "sar_needed": False,
-      "superuser": False
-    })
-    return log_on(user_id, server_id, datetime_amount)
-  elif not start_check:
-    return None, 1
+	user_check = False
+	start_check = False
+	users = list(database.users.find({
+		"$and": [
+			{"user_id": Int64(user_id)},
+			{"server_id": Int64(server_id)}
+		]
+	}))
+	if users != []:
+		user_check = True
+		patrols = list(database.patrols.find({
+		"$and": [
+			{"$and": [
+				{"user_id": Int64(user_id)},
+				{"server_id": Int64(server_id)}
+			]},
+			{"end": {"$type": 10}}
+		]
+	}))
+	if patrols == []:
+		start_check = True
+		event_id = get_id()
+		patrols = database.patrols
+		patrols.insert_one({
+			"event_id": event_id,
+			"user_id": user_id,
+			"server_id": server_id,
+			"start": datetime_amount,
+			"end": None
+		})
+		return event_id, None
+	if not user_check:
+		users = database.users
+		users.insert_one({
+			"user_id": user_id,
+			"server_id": server_id,
+			"sar_needed": False,
+			"superuser": False
+		})
+		return log_on(user_id, server_id, datetime_amount)
+	elif not start_check:
+		return None, 1
 
 def radar_on(user_id, server_id, date_amount, time_amount):
 	user_check = False
 	start_check = False
 	users = list(database.users.find({
-    "$and": [
-      {"user_id": Int64(user_id)},
-      {"server_id": Int64(server_id)}
-    ]
-  }))
-  if users != []:
-    user_check = True
-    start = datetime.combine(date_amount, time_amount)
-    radars = list(database.radars.find({
-      "$and": [
-          {"$and": [
-            {"user_id": Int64(user_id)},
-            {"server_id": Int64(server_id)}
-          ]},
-          {"end": {"$type": 10}}
-        ]
-    }))
-    if radars == []:
-      start_check = True
-      event_id = get_id()
-      radars = database.radars
-      radars.insert_one({
-        "event_id": event_id,
-        "user_id": user_id,
-        "server_id": server_id,
-        "start": str(start),
-        "end": None
-      })
-      return event_id, None
-  if not user_check:
-    users = database.users
-    users.insert_one({
-      "user_id": user_id,
-      "server_id": server_id,
-      "sar_needed": False,
-      "superuser": False
-    })
-    return radar_on(user_id, server_id, date_amount, time_amount)
-  elif not start_check:
-    return None, 1
+		"$and": [
+			{"user_id": Int64(user_id)},
+			{"server_id": Int64(server_id)}
+		]
+	}))
+	if users != []:
+		user_check = True
+		start = datetime.combine(date_amount, time_amount)
+		radars = list(database.radars.find({
+			"$and": [
+				{"$and": [
+					{"user_id": Int64(user_id)},
+					{"server_id": Int64(server_id)}
+				]},
+				{"end": {"$type": 10}}
+			]
+		}))
+		if radars == []:
+			start_check = True
+			event_id = get_id()
+			radars = database.radars
+			radars.insert_one({
+				"event_id": event_id,
+				"user_id": user_id,
+				"server_id": server_id,
+				"start": str(start),
+				"end": None
+			})
+			return event_id, None
+	if not user_check:
+		users = database.users
+		users.insert_one({
+			"user_id": user_id,
+			"server_id": server_id,
+			"sar_needed": False,
+			"superuser": False
+		})
+		return radar_on(user_id, server_id, date_amount, time_amount)
+	elif not start_check:
+		return None, 1
+
 
 def log_off(user_id, server_id, datetime_amount):
-  user_check = False
-  start_check = False
-  #identifies the valid online user.
-  users = list(database.users.find({
-    "$and": [
-      {"user_id": Int64(user_id)},
-      {"server_id": Int64(server_id)}
-    ]
-  }))
-  if users != []:
-    user_check = True
-    patrol_filter = {
-      "$and": [
-          {"$and": [
-            {"user_id": Int64(user_id)},
-            {"server_id": Int64(server_id)}
-          ]},
-          {"end": {"$type": 10}}
-        ]
-    }
-    patrols = list(database.patrols.find(patrol_filter))
-    if patrols != []:
-      start_check = True
-      start = patrols[0]["start"]
-      end = datetime_amount
+	user_check = False
+	start_check = False
+	#identifies the valid online user.
+	users = list(database.users.find({
+		"$and": [
+			{"user_id": Int64(user_id)},
+			{"server_id": Int64(server_id)}
+		]
+	}))
+	if users != []:
+		user_check = True
+		patrol_filter = {
+			"$and": [
+				{"$and": [
+				{"user_id": Int64(user_id)},
+				{"server_id": Int64(server_id)}
+				]},
+				{"end": {"$type": 10}}
+			]
+		}
+		patrols = list(database.patrols.find(patrol_filter))
+		if patrols != []:
+			start_check = True
+			start = patrols[0]["start"]
+			end = datetime_amount
 			event_id = patrols[0]["event_id"]
 			
 			patrol_data = database.patrols
@@ -324,24 +325,24 @@ def log_off(user_id, server_id, datetime_amount):
 			#calculates the length of the patrol
 			duration = end - start
 			return duration, len(patrols), total_patrol_time, event_id, None
-
+	
 	if not user_check:
 		return None, None, None, None, 3
 	elif not start_check:
 		return None, None, None, None, 2
 
 def confirm_patrol(user_id, server_id):
-  patrols = list(database.patrols.find({
-    "$and": [
-      {
-        "$and": [
-          {"user_id": user_id},
-          {"server_id": server_id}
-        ]
-      },
-      {"end": {"$type": 10}}
-    ]
-  }))
+	patrols = list(database.patrols.find({
+		"$and": [
+		{
+		  "$and": [
+			{"user_id": user_id},
+			{"server_id": server_id}
+		  ]
+		},
+		{"end": {"$type": 10}}
+	  ]
+	}))
 	if patrols == []:
 		return True
 	return False
@@ -376,7 +377,7 @@ def radar_off(user, date_amount, time_amount, status, stats):
 				stats[stats.index(item)]["status"][1] = status
 				stats[stats.index(item)]["cur_radar"] = None
 				return stats, duration, len(item["radars"]), total_radars, event_id, None
-
+  
 	if not user_check:
 		return stats, None, None, None, None, 3
 	elif not start_check:
@@ -388,7 +389,7 @@ def confirm_radar(stats, user_id):
 			if user["cur_radar"]:
 				return False
 			return True
-
+	
 def do_kill(user, date_amount, time_amount, stats):
 	user_check = False
 	#scans for the currect user.
@@ -485,25 +486,25 @@ def record_sar(user, date_amount, time_amount, action, pilot, stats):
 		return stats, count, id, None
 
 def do_register(server_id, guilds):
-    guild_check = True
-    #scans to make sure the guild has not already
-    #been registered.
-    for item in guilds:
-      if item["server_id"] == server_id:
-        guild_check = False
-    
-    if not guild_check:
-    	return guilds, 9
-    		
-    #if not it adds the entry in the guild
-    #collection
-    database.guilds.insert_one({
-      "server_id": server_id,
-      "announcement_channel": None,
-      "prefix": "=prime "
-    })
-    
-    return guilds, None
+		guild_check = True
+		#scans to make sure the guild has not already
+		#been registered.
+		for item in guilds:
+			if item["server_id"] == server_id:
+				guild_check = False
+		
+		if not guild_check:
+			return guilds, 9
+				
+		#if not it adds the entry in the guild
+		#collection
+		database.guilds.insert_one({
+			"server_id": server_id,
+			"announcement_channel": None,
+			"prefix": "=prime "
+		})
+		
+		return guilds, None
 
 def do_top(stats, mode, span):
 	mode_check = False
@@ -632,7 +633,7 @@ def do_setannounce(guilds, server, channel):
 	if not guild_check:
 		return guilds, 15
 	return guilds, None
-
+			
 def do_userlogs(stats, pilot, type):
 	logs = []
 	user_check = False#initializes error catch checks
@@ -751,12 +752,12 @@ async def on_guild_join(guild):
 
 @bot.command(brief="Log when you get online.", description="Log when you get online.")
 async def on(ctx):
-  datetime_amount = datetime.now().replace(microsecond=0)
+	datetime_amount = datetime.now().replace(microsecond=0)
 	time_zone = datetime_amount.astimezone().tzinfo
 	
 	embed = discord.Embed(title="Patrol Event",
-						  description=f"{ctx.message.author.mention} has started their patrol.",
-						  color=0xFF5733)
+							description=f"{ctx.message.author.mention} has started their patrol.",
+							color=0xFF5733)
 	embed.add_field(name="Name: ", value=ctx.message.author.mention)
 	embed.add_field(name="Date: ", value=str(datetime_amount.date()))
 	embed.add_field(name="Time: ", value=str(f"{time_zone}: {datetime_amount.time().strftime('%H:%M:%S')}"))
@@ -780,8 +781,8 @@ async def radon(ctx):
 	time_amount = datetime.now().time()
 	time_zone = datetime.now(timezone.utc).astimezone().tzinfo
 	embed = discord.Embed(title="Radar Event",
-						  description=f"{ctx.message.author.mention} has started their patrol.",
-						  color=0xFF5733)
+							description=f"{ctx.message.author.mention} has started their patrol.",
+							color=0xFF5733)
 	embed.add_field(name="Name: ", value=ctx.message.author.mention)
 	embed.add_field(name="Date: ", value=str(date_amount))
 	embed.add_field(name="Time: ", value=str(f"{time_zone}: {time_amount.strftime('%H:%M:%S')}"))
@@ -807,7 +808,7 @@ async def off(ctx):
 	datetime_amount = datetime.now().replace(microsecond=0)
 	time_zone = datetime_amount.astimezone().tzinfo
 	
-  print(datetime_amount.tzinfo)
+	print(datetime_amount.tzinfo)
 	
 	embed = discord.Embed(title="Patrol Event",
 						 description=f"{ctx.message.author.mention} has ended their patrol.",
@@ -994,8 +995,8 @@ async def sar(ctx, action, pilot: discord.User = None):
 		save_stats(stats, ctx.message.guild.id)
 @sar.error
 async def info_error(ctx, error): # This might need to be (error, ctx), I'm not sure
-    if isinstance(error, commands.BadArgument):
-        await ctx.send(get_error(7))
+		if isinstance(error, commands.BadArgument):
+				await ctx.send(get_error(7))
 
 @bot.command(brief="Register your server when you add this bot.", description="Register your server when you add this bot.")
 async def register(ctx):
@@ -1056,8 +1057,8 @@ async def cradmin(ctx, user: discord.User):
 #error detection for an invalid user entry.
 @cradmin.error
 async def user_error(ctx, error): # This might need to be (error, ctx), I'm not sure
-    if isinstance(error, commands.BadArgument):
-        await ctx.send(get_error(12))
+		if isinstance(error, commands.BadArgument):
+				await ctx.send(get_error(12))
 
 #Allows an admin to remove an event from the
 #registry.
@@ -1158,7 +1159,7 @@ async def userlogs(ctx, pilot: discord.User, type):
 		return
 	log_text = ""
 	for item in logs: #cycles through all of the events and
-					  #formats them for the embed.
+						#formats them for the embed.
 		if type == "kills" or type == "disables":
 			log_text += f"**id:** {item['id']}, **time:** {item['time']}\n"
 		elif type == "patrols" or type == "radars":
@@ -1171,8 +1172,8 @@ async def userlogs(ctx, pilot: discord.User, type):
 	await ctx.send(embed=embed)
 @userlogs.error
 async def pilot_error(ctx, error): # This might need to be (error, ctx), I'm not sure
-    if isinstance(error, commands.BadArgument):
-        await ctx.send(get_error(7))
+		if isinstance(error, commands.BadArgument):
+				await ctx.send(get_error(7))
 
 @bot.command(brief="help")#custom help command
 #links users to the duke discord server and the docs.
