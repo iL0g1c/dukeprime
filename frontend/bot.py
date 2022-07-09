@@ -539,7 +539,7 @@ def record_sar(user, date_amount, time_amount, action, pilot, stats):
 
 def do_register(id, guilds):
 	guild_check = True
-	file = str(id) + ".jl"
+	file = f"{database_path}{id}.jl"
 	#scans to make sure the guild has not already
 	#been registered.
 	for item in guilds:
