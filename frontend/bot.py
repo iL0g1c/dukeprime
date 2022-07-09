@@ -23,7 +23,7 @@ def load_stats(id):
 		for obj in reader:
 			if obj["id"] == id:
 				guild_check = True
-				file = database_path + obj["file"]
+				file = obj["file"]
 				break
 	reader.close()
 
@@ -539,7 +539,7 @@ def record_sar(user, date_amount, time_amount, action, pilot, stats):
 
 def do_register(id, guilds):
 	guild_check = True
-	file = str(id) + ".jl"
+	file = f"{id}.jl"
 	#scans to make sure the guild has not already
 	#been registered.
 	for item in guilds:
@@ -557,7 +557,7 @@ def do_register(id, guilds):
 		"file": file,
 		"prefix": "=prime "
 	})
-	
+	file = database_path + file
 	#creates the guilds registry file.
 	if not (os.path.isfile(file) and os.access(file, os.R_OK)):
 		create_stats(file)
