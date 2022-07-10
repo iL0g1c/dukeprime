@@ -801,8 +801,10 @@ async def ping(ctx):
 async def on_guild_join(guild):
 	guilds = load_guilds()
 	guilds, error = do_register(guild.id, guilds)
-	if error:
-		await guild.text_channels[0].send("Make sure to register yourself with the 'register' command")
+	if error == 9:
+		await guild.text_channels[0].send("Thanks for adding back DukePrime! Your old server records have been restored.")
+	elif error:
+		await guild.text_channels[0].send(f"Error in registering your server.\n ERROR: {get_error(error)}\n Try using =register to register manually.\n If this does not work you can seek technical assistance from Duke Knight Systems: https://discord.gg/qYmdfA4NGa")
 	else:
 		await guild.text_channels[0].send("Your server has been automatically registered.\n If you would like recieve updates on known bugs, and new features run the 'setannounce' command in the announcements channel.\n DISCLAIMER: Duke will not use this feature for advertising purposes.")
 		save_guilds(guilds)
@@ -1069,8 +1071,8 @@ async def sar(ctx, action, pilot: discord.User = None):
 		save_stats(stats, ctx.message.guild.id)
 @sar.error
 async def info_error(ctx, error): # This might need to be (error, ctx), I'm not sure
-    if isinstance(error, commands.BadArgument):
-        await ctx.send(get_error(7))
+	if isinstance(error, commands.BadArgument):
+		await ctx.send(get_error(7))
 
 @bot.command(brief="Register your server when you add this bot.", description="Register your server when you add this bot.")
 async def register(ctx):
@@ -1131,8 +1133,8 @@ async def cradmin(ctx, user: discord.User):
 #error detection for an invalid user entry.
 @cradmin.error
 async def user_error(ctx, error): # This might need to be (error, ctx), I'm not sure
-    if isinstance(error, commands.BadArgument):
-        await ctx.send(get_error(12))
+	if isinstance(error, commands.BadArgument):
+		await ctx.send(get_error(12))
 
 #Allows an admin to remove an event from the
 #registry.
@@ -1246,8 +1248,8 @@ async def userlogs(ctx, pilot: discord.User, type):
 	await ctx.send(embed=embed)
 @userlogs.error
 async def pilot_error(ctx, error): # This might need to be (error, ctx), I'm not sure
-    if isinstance(error, commands.BadArgument):
-        await ctx.send(get_error(7))
+	if isinstance(error, commands.BadArgument):
+		await ctx.send(get_error(7))
 
 @bot.command(brief="help")#custom help command
 #links users to the duke discord server and the docs.
