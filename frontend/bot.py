@@ -23,7 +23,7 @@ def load_stats(id):
 		for obj in reader:
 			if obj["id"] == id:
 				guild_check = True
-				file = obj["file"]
+				file = database_path + obj["file"]
 				break
 	reader.close()
 
