@@ -667,11 +667,11 @@ def do_remev(stats, event_id, user):
 				valid_id = True
 				del item["kills"][item["kills"].index(kill)]
 		for disable in item["disables"]:
-			if kill["id"] == int(event_id):
+			if disable["id"] == int(event_id):
 				valid_id = True
 				del item["disables"][item["disables"].index(disable)]
 		for sar in item["sars"]:
-			if kill["id"] == int(event_id):
+			if sar["id"] == int(event_id):
 				valid_id = True
 				del item["sars"][item["sars"].index(sar)]
 	if not valid_id:
