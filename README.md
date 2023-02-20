@@ -57,8 +57,8 @@ The type is which statistic you would like to view.
 The span is the timespan that you would like to view your patrols in.
 
 ### ```test```
-###Use:
-To start a quiz in which you can practice your missile countermeasures.
+### Use:
+To start a quiz in which you can practice your missile countermeasures. Respond with  the number of the fox code. Ex. type "1" for a fox 1 missile.
 
 ### ```userlogs <pilot: @mention> <type: patrols|radars|kills|disables|sars>```
 ### Use:
