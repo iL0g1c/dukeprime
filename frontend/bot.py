@@ -1,3 +1,4 @@
+from distutils import text_file
 import os
 import discord
 from discord.ext import commands, tasks
@@ -23,7 +24,7 @@ def load_stats(id):
 		for obj in reader:
 			if obj["id"] == id:
 				guild_check = True
-				file = database_path + obj["file"]
+				file = obj["file"]
 				break
 	reader.close()
 
@@ -32,7 +33,7 @@ def load_stats(id):
 	
 	#uses the guild filename to load all of the
 	#lines for the guild.
-	with jsonlines.open(file) as reader:
+	with jsonlines.open(database_path + file) as reader:
 		for obj in reader:
 			stats.append(obj)
 	reader.close()
@@ -101,14 +102,7 @@ def create_stats(file):
 	f.close()
 
 def registry_trans():
-	print("Updating registry data structure...")
-	guilds = load_guilds()
-	for i in range(len(guilds)):
-		print(f"Updating guilds {i+1} out of {len(guilds)}")
-		guilds[i]["prefix"] = "=prime "
-		stats = load_stats(guilds[i]["id"])[0]
-	save_guilds(guilds)
-	print("Complete.")
+	pass
 	
 
 def get_total_patrols(patrols, user):
@@ -176,92 +170,25 @@ def get_error(code):
 
 def get_missiles():
 	return [
-		["Matra R.511",1],
-		["Matra R.530",1],
-		["Matra Super 530F/Super 530D",1],
-		["Sedjil",1],
-		["Al Humurrabi",1],
-		["Aspide",1],
-		["R-40RD",1],
-		["R-23R",1],
-		["R-24R",1],
-		["R-33",1],
-		["R-27R/R-27R1",1],
-		["R-27ER/R-27ER1",1],
-		["R-77P/RVV-PE",1],
-		["R-37",1],
-		["AIM-7",1],
-		["Sparrow",1],
-		["AIM-9C Sidewinder",1],
-		["Izdeliye 140",1],
-		["Izdeliye 340",1],
-		["MAA-1A Piranha",2],
-		["MAA-1B Piranha",2],
-		["A-Darter",2],
-		["Matra R.510",2],
-		["Matra R.550 Magic",2],
-		["R530E",2],
-		["Matra Magic II",2],
-		["MICA-IR",2],
-		["IRIS-T Fatter",2],
-		["Python (Shafrir 1/2 | Python 3/4/5)",2],
-		["AAM-3",2],
-		["AAM-5",2],
-		["PL-5B/C/E",2],
-		["PL-8",2],
-		["PL-9 (PL-9C)",2],
-		["PL-10/PL-ASR",2],
-		["K-13",2],
-		["R-40TD",2],
-		["R-23T",2],
-		["R-24T",2],
-		["R-60",2],
-		["R-27T/R-27T1",2],
-		["R-27ET/R-27ET1",2],
-		["R-73",2],
-		["R-73M",2],
-		["R-74M/RVV-MD/R-74M2",2],
-		["R-77T/RVV-TE",2],
-		["V3 Kukri",2],
-		["Sky Sword I (TC-1)",2],
-		["AIM-9 Sidewinder",2],
-		["AIM-92 Stinger",2],
-		["AIM-132 ASRAAM",2],
-		["Bozdoğan (Merlin)",2],
-		["K-MD",2],
-		["RVV-MD",2],
-		["Izdeliye 160",2],
-		["Izdeliye 300",2],
-		["Izdeliye 310",2],
-		["Izdeliye 320",2],
-		["Izdeliye 360",2],
-		["Izdeliye 740",2],
-		["Izdeliye 750",2],
-		["Izdeliye 760",2],
-		["MICA-EM",3],
-		["Astra Mk.I",3],
-		["K-100",3],
-		["Fakour-90",3],
-		["Derby (Alto)",3],
-		["AAM-4",3],
-		["PL-12 (SD-10)",3],
-		["F80",3],
-		["PL-15",3],
-		["R-33S",3],
-		["R-27EA",3],
-		["R-27EM",3],
-		["R-77/RVV-AE",3],
-		["R-77-1/RVV-SD",3],
-		["KS-172",3],
-		["R-Darter",3],
-		["AIM-120 AMRAAM",3],
-		["Sky Sword II (TC-2)",3],
-		["Izdeliye 170",3],
-		["Izdeliye 172",3],
-		["Izdeliye 180",3],
-		["Izdeliye 190",3],
-		["Izdeliye 610",3],
-		["Izdeliye 810",3]
+		["Sky Sword IIC", 3],
+        ["MBDA Meteor", 3],
+        ["Astra Missile", 3],
+        ["K-100", 3],
+        ["AIM-120D AMRAAM", 3],
+        ["PL-12", 3],
+        ["Diehl IRIS-T", 2],
+        ["AIM-132 ASRAAM", 2],
+        ["AAM-4", 3],
+        ["MICA-EM", 3],
+        ["MICA-IR", 2],
+        ["AIM-120C/B", 3],
+        ["R-77T", 2],
+        ["Rafael Derby", 3],
+        ["R-37", 2],
+        ["R-27", 1],
+        ["R-33", 1],
+        ["AIM-7", 1],
+        ["AIM-9", 2]
 	]
 
 def round_seconds(obj):
@@ -546,7 +473,7 @@ def record_sar(user, date_amount, time_amount, action, pilot, stats):
 
 def do_register(id, guilds):
 	guild_check = True
-	file = str(id) + ".jl"
+	file = f"{id}.jl"
 	#scans to make sure the guild has not already
 	#been registered.
 	for item in guilds:
@@ -564,7 +491,7 @@ def do_register(id, guilds):
 		"file": file,
 		"prefix": "=prime "
 	})
-	
+	file = database_path + file
 	#creates the guilds registry file.
 	if not (os.path.isfile(file) and os.access(file, os.R_OK)):
 		create_stats(file)
@@ -587,8 +514,8 @@ def do_top(stats, mode, span):
 		return stats, None, 11
 		
 	#gets the constants for the different parameters.
-	day_date = date.today() 
-	day = datetime(day_date.year, day_date.month, day_date.day) 
+	day_date = date.today()
+	day = datetime(day_date.year, day_date.month, day_date.day)
 	week_date = day_date - timedelta(days=((day_date.isoweekday() + 1) % 7)) + timedelta(days=1)
 	week = datetime(week_date.year, week_date.month, week_date.day, 0, 0, 0)
 	month = datetime(day_date.year, day_date.month, 1)
@@ -772,9 +699,9 @@ def do_prefix(stats, token, user, id):
 		return 15
 	save_guilds(guilds)
 	return None
-		
 
-intents = discord.Intents.default()
+
+intents = discord.Intents.all()
 intents.members = True
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -797,8 +724,6 @@ async def on_ready():
 	full_guilds = []
 	for guild in activeservers:
 		print(guild.name)
-		full_guilds.append(guild)
-	#await load_channels(full_guilds)
 
 @bot.command(brief="Test the connection.", description="Test the connection.")
 async def ping(ctx):
@@ -809,8 +734,10 @@ async def ping(ctx):
 async def on_guild_join(guild):
 	guilds = load_guilds()
 	guilds, error = do_register(guild.id, guilds)
-	if error:
-		await guild.text_channels[0].send("Make sure to register yourself with the 'register' command")
+	if error == 9:
+		await guild.text_channels[0].send("Thanks for adding back DukePrime! Your old server records have been restored.")
+	elif error:
+		await guild.text_channels[0].send(f"Error in registering your server.\n ERROR: {get_error(error)}\n Try using =register to register manually.\n If this does not work you can seek technical assistance from Duke Knight Systems: https://discord.gg/qYmdfA4NGa")
 	else:
 		await guild.text_channels[0].send("Your server has been automatically registered.\n If you would like recieve updates on known bugs, and new features run the 'setannounce' command in the announcements channel.\n DISCLAIMER: Duke will not use this feature for advertising purposes.")
 		save_guilds(guilds)
@@ -838,7 +765,7 @@ async def on(ctx):
 		action = f"Patrol Start Error Code: {error}"
 		await ctx.send(get_error(error))
 	else:
-		action = "Patrol Start"		
+		action = "Patrol Start"
 		embed.add_field(name="Event ID: ", value=event_id)
 		await ctx.send(embed=embed)
 		save_stats(stats, ctx.message.guild.id)
@@ -870,7 +797,7 @@ async def radon(ctx):
 		action = f"Radar Patrol Start Error Code: {error}"
 		await ctx.send(get_error(error))
 	else:
-		action = "Radar Patrol Start"		
+		action = "Radar Patrol Start"
 		embed.add_field(name="Event ID: ", value=event_id)
 		await ctx.send(embed=embed)
 		save_stats(stats, ctx.message.guild.id)
@@ -1077,8 +1004,8 @@ async def sar(ctx, action, pilot: discord.User = None):
 		save_stats(stats, ctx.message.guild.id)
 @sar.error
 async def info_error(ctx, error): # This might need to be (error, ctx), I'm not sure
-    if isinstance(error, commands.BadArgument):
-        await ctx.send(get_error(7))
+	if isinstance(error, commands.BadArgument):
+		await ctx.send(get_error(7))
 
 @bot.command(brief="Register your server when you add this bot.", description="Register your server when you add this bot.")
 async def register(ctx):
@@ -1139,8 +1066,8 @@ async def cradmin(ctx, user: discord.User):
 #error detection for an invalid user entry.
 @cradmin.error
 async def user_error(ctx, error): # This might need to be (error, ctx), I'm not sure
-    if isinstance(error, commands.BadArgument):
-        await ctx.send(get_error(12))
+	if isinstance(error, commands.BadArgument):
+		await ctx.send(get_error(12))
 
 #Allows an admin to remove an event from the
 #registry.
@@ -1254,8 +1181,8 @@ async def userlogs(ctx, pilot: discord.User, type):
 	await ctx.send(embed=embed)
 @userlogs.error
 async def pilot_error(ctx, error): # This might need to be (error, ctx), I'm not sure
-    if isinstance(error, commands.BadArgument):
-        await ctx.send(get_error(7))
+	if isinstance(error, commands.BadArgument):
+		await ctx.send(get_error(7))
 
 @bot.command(brief="help")#custom help command
 #links users to the duke discord server and the docs.
@@ -1273,7 +1200,7 @@ async def prefix(ctx, token):
 	if error:
 		await ctx.send(get_error(error))
 		return
-	await ctx.message.guild.me.edit(nick=f"[{token}] DukePrime|Beta")
+	await ctx.message.guild.me.edit(nick=f"[{token}]DukePrime")
 	await ctx.send("Changed my prefix to: " + token)
 	time_stamp = datetime.now()
 	write_log(None, time_stamp, str(ctx.message.guild.id), str(ctx.message.author.id), "Changed prefix.")

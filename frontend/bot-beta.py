@@ -242,6 +242,7 @@ def log_on(user_id, server_id, datetime_amount):
         return event_id, None
     else:
         return None, 1
+    print("hello world")
 
 def radar_on(user_id, server_id, datetime_amount):
     user_check = False
@@ -486,67 +487,65 @@ def record_sar(user_id, server_id, datetime_amount, action, pilot_id):
         ]
     }
     users = list(database.users.find(user_filter))
-        user_check = True
-        if action == "req":
-            sar_end_check = True
-            action_check = True
-            if pilot_id == None:
-                no_pilot_check = True
-            else:
-                return None, None, 5
-            #updates the sar_needed variable to log the request.
-            if users[0]["sar_needed"] == "no":
-                sar_start_check = True
+    user_check = True
+    if action == "req":
+        sar_end_check = True
+        action_check = True
+        if pilot_id == None:
+            no_pilot_check = True
+        else:
+            return None, None, 5
+        #updates the sar_needed variable to log the request.
+        if users[0]["sar_needed"] == "no":
+            sar_start_check = True
+            user_data = database.users
+            user_data.update_one(
+                user_filter,
+                {"$set": {"sar_needed": "yes"}}
+            )
+        else:
+            return None, None, 6
+        count = None
+        event_id = None
+    elif action == "give":
+        action_check = True
+        sar_start_check = True
+        no_pilot_check = True
+        pilot_filter = {
+            "$and": [
+                {"user_id": Int64(pilot_id)},
+                {"server_id": Int64(server_id)}
+            ]
+        }
+        pilot = list(database.users.find(pilot_filter))
+        if pilot != []:
+            pilot_check = True
+            if pilot[0]["sar_needed"] == "yes":
+                sar_end_check = True
                 user_data = database.users
                 user_data.update_one(
-                    user_filter,
-                    {"$set": {"sar_needed": "yes"}}
+                    pilot_filter,
+                    {"$set": {"sar_needed": "no"}}
                 )
             else:
-                return None, None, 6
-            count = None
-            event_id = None
-        elif action == "give":
-            action_check = True
-            sar_start_check = True
-            no_pilot_check = True
-            pilot_filter = {
-                "$and": [
-                    {"user_id": Int64(pilot_id)},
-                    {"server_id": Int64(server_id)}
-                ]
-            }
-            pilot = list(database.users.find(pilot_filter))
-            if pilot != []:
-                pilot_check = True
-                if pilot[0]["sar_needed"] == "yes":
-                    sar_end_check = True
-                    user_data = database.users
-                    user_data.update_one(
-                        pilot_filter,
-                        {"$set": {"sar_needed": "no"}}
-                    )
-                else:
-                    return None, None, 8
-            else:
-                return None, None, 7
-            event_id = get_id()
-            sar_data = database.sars
-            sar_data.insert_one({
-                "event_id": event_id,
-                "user_id": user_id,
-                "server_id": server_id,
-                "pilot_id": pilot_id,
-                "time": datetime_amount
-            })
-            count = len(list(database.sars.find({
-                "$and": [
-                    {"user_id": Int64(user_id)},
-                    {"server_id": Int64(server_id)}
-                ]
-            })))
+                return None, None, 8
         else:
-            return None, None, 4
+            return None, None, 7
+        event_id = get_id()
+        sar_data = database.sars
+        sar_data.insert_one({
+            "event_id": event_id,
+            "user_id": user_id,
+            "server_id": server_id,
+            "pilot_id": pilot_id,
+            "time": datetime_amount
+        })
+        count = len(list(database.sars.find({
+            "$and": [
+                {"user_id": Int64(user_id)},
+                {"server_id": Int64(server_id)}
+            ]
+        })))
     else:
         return None, None, 3
     return count, event_id, None
@@ -572,7 +571,7 @@ def do_register(server_id, guilds):
         
         return guilds, None
 
-def do_top(stats, mode, span):
+def do_top(server_id, mode, span):
     mode_check = False
     span_check = False
     #span is day, week, month
@@ -590,54 +589,35 @@ def do_top(stats, mode, span):
         
     #gets the constants for the different parameters.
     day_date = date.today()
-    day = datetime(day_date.year, day_date.month, day_date.day)
-    week_date = day_date - timedelta(days=((day_date.isoweekday() + 1) % 7)) + timedelta(days=1)
-    week = datetime(week_date.year, week_date.month, week_date.day, 0, 0, 0)
-    month = datetime(day_date.year, day_date.month, 1)
+    if span == "day":
+        period = datetime(day_date.year, day_date.month, day_date.day)
+    elif span == "week":
+        week_date = day_date - timedelta(days=((day_date.isoweekday() + 1) % 7)) + timedelta(days=1)
+        period = datetime(week_date.year, week_date.month, week_date.day, 0, 0, 0)
+    elif span == "month":
+        period = datetime(day_date.year, day_date.month, 1)
 
-    candids = []
-    if mode == "patrol_time":
-        mode_type = "patrols"
+    if mode == "patrols":
+        patrol_filter = {
+            "$and": [
+                {"end": {"$gte": period}},
+                {"server_id": Int64(server_id)}
+            ]
+        }
+        patrols = list(database.patrols.find(patrol_filter))
+        print(patrols)
+    elif mode == "patrol_time":
+        pass
+    elif mode == "kills":
+        pass
+    elif mode == "disables":
+        pass
+    elif mode == "sars":
+        pass
+    elif mode == "radars":
+        pass
     elif mode == "radar_time":
-        mode_type = "radars"
-    else:
-        mode_type = mode
-    #identifies all events in valid timespan.
-    for user in stats:
-        for item in user[mode_type]:
-            item["user"] = user["user"]
-            if item["end"] == None:
-                continue
-            mode_time = datetime.strptime(item["end"], "%Y-%m-%d %H:%M:%S.%f")
-            if span == "day" and mode_time >= day:
-                candids.append(item)
-            elif span == "week" and mode_time >= week:
-                candids.append(item)
-            elif span == "month" and mode_time >= month:
-                candids.append(item)
-            elif span == "all":
-                candids.append(item)
-    users = list(map(itemgetter("user"), stats))
-    counts = {}
-    #uses the events to create a table holding
-    #the number of patrols for each user.
-    for candid in candids:
-        for user in users:
-            if not(mode == "patrol_time" or mode == "radar_time"):
-                if not (user in counts):
-                    counts[user] = 0
-                if candid["user"] == user:
-                    counts[user] += 1
-            else:
-                counts[user] = get_total_patrols(candids, user)
-    #sorts the users by patrol count.
-    n = len(counts)
-    counts = list(counts.items())
-    for i in range(n):
-        for j in range(0, n-i-1):
-            if counts[j][1] < counts[j+1][1]:
-                counts[j], counts[j+1] = counts[j+1], counts[j]
-    return stats, counts, None
+        pass
 
 def do_cradmin(stats, user):
     user_check = False
@@ -1058,12 +1038,13 @@ async def register(ctx):
         save_guilds(guilds)
 
 @bot.command(brief="View your militaries statistics.", description="The first parameter is the type of stats. This is either <patrols> <kill> <disables> or <sars>. The second parameter, optional, is the time span the patrols were taken in. Currently you can use <day> <week> or <month>. This defaults to week.")
-async def top(ctx, type, span="month"):
-    stats, error=load_stats(ctx.message.guild.id)
-    if error:
-        await ctx.send(get_error(error))
-        return
-    results, ranks, error = do_top(stats, type, span)
+async def top(ctx, mode, span="month"):
+    server_id = ctx.message.guild.id
+
+    datetime_amount = datetime.now().replace(microsecond=0)
+    time_zone = datetime_amount.astimezone().tzinfo
+
+    results, ranks, error = do_top(server_id, mode, span)
     if error:
         await ctx.send(get_error(error))
     else:
