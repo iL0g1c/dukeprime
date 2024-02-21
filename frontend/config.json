@@ -1,4 +1,4 @@
 {
-  "database_path": "../var/www/backend/database/",
-  "default_prefix": "=primeb "
+  "database_path": "../../var/www/backend/database/",
+  "default_prefix": "=prime"
 }
